@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LabExplain - Accueil</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="home">
+  <header class="site-header glass-header">
+    <div class="logo"><a href="index.html">LabExplain</a></div>
+
+    <nav>
+      <a href="index.html" data-i18n="home">Accueil</a>
+      <a href="#" onclick="checkAuthAndRedirect(); return false;" data-i18n="form">Formulaire</a>
+    </nav>
+
+    <div class="right">
+      <label class="sr-only" for="lang">Langue</label>
+      <select id="lang" aria-label="Choix de la langue">
+        <option value="fr">FR</option>
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="ar">AR</option>
+      </select>
+
+      <label class="sr-only" for="fontSelect">Police</label>
+      <select id="fontSelect" aria-label="Choix de la police">
+        <option value="standard">Standard</option>
+        <option value="malvoyant">Malvoyant</option>
+        <option value="dyslexique">Dyslexique</option>
+        <option value="tdah">TDAH</option>
+      </select>
+
+      <div class="dropdown" id="accountMenu" hidden>
+        <button id="btn-account" type="button" data-i18n="account">Compte ▾</button>
+        <div class="dropdown-content">
+          <button type="button" onclick="showProfile()" data-i18n="myProfile">Mon profil</button>
+          <button type="button" onclick="logout()" data-i18n="logout">Déconnexion</button>
+        </div>
+      </div>
+
+      <a href="auth.html" id="loginLink" data-i18n="login">Connexion</a>
+    </div>
+  </header>
+
+  <main class="home-premium">
+    <section class="hero-premium">
+      <div class="hero-left">
+        <span class="hero-badge" data-i18n="tagline">Accessibilité • Préparation • Clarté</span>
+        <h1 data-i18n="welcome">Bienvenue sur LabExplain</h1>
+        <p class="hero-text" data-i18n="desc">
+          Préparez votre consultation en toute sérénité.
+        </p>
+
+        <p class="hero-subtext">
+          LabExplain aide le patient à structurer ses symptômes, ses traitements et ses antécédents
+          avant le rendez-vous, sans jamais remplacer un professionnel de santé.
+        </p>
+
+        <div class="hero-cta">
+          <a class="button primary big-btn" href="#" onclick="checkAuthAndRedirect(); return false;" data-i18n="startNow">Commencer</a>
+          <a class="button secondary big-btn" href="auth.html" data-i18n="login">Connexion</a>
+        </div>
+
+        <div class="hero-trust-row">
+          <div class="trust-pill">🔒 Données locales</div>
+          <div class="trust-pill">🌍 Multilingue</div>
+          <div class="trust-pill">🧠 Accessibilité cognitive</div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="hero-card hero-card-main">
+          <div class="mock-header">
+            <span></span><span></span><span></span>
+          </div>
+
+          <div class="mock-content">
+            <div class="mock-bot">Bonjour. Pour quel médecin est le rendez-vous ?</div>
+            <div class="mock-user">Dr Martin</div>
+            <div class="mock-bot">Comment vous sentez-vous aujourd’hui ?</div>
+            <div class="mock-options">
+              <span>Très mal</span>
+              <span>Un peu mal</span>
+              <span>Visite normale</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="floating-card floating-top">
+          <strong>+ clair</strong>
+          <p>Un résumé structuré avant la consultation</p>
+        </div>
+
+        <div class="floating-card floating-bottom">
+          <strong>+ accessible</strong>
+          <p>Langues et polices adaptées à chaque profil</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="medical-warning">
+      <div class="warning-card">
+        <strong data-i18n="medicalFrameTitle">Cadre médical</strong>
+        <p data-i18n="medicalFrameText">
+          LabExplain ne pose aucun diagnostic et ne remplace pas un professionnel de santé.
+        </p>
+      </div>
+    </section>
+
+    <section class="stats-strip">
+      <div class="stat-box">
+        <h3>4</h3>
+        <p>langues disponibles</p>
+      </div>
+      <div class="stat-box">
+        <h3>3</h3>
+        <p>modes de lecture adaptés</p>
+      </div>
+      <div class="stat-box">
+        <h3>1</h3>
+        <p>objectif : mieux communiquer</p>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-head">
+        <span class="section-kicker">Pourquoi LabExplain ?</span>
+        <h2>Une expérience pensée pour les patients qui ont du mal à exprimer l’essentiel</h2>
+        <p>
+          Le stress, la langue, la douleur, l’âge ou certains troubles cognitifs peuvent rendre
+          une consultation plus difficile. LabExplain prépare l’échange avant le rendez-vous.
+        </p>
+      </div>
+
+      <div class="feature-grid premium-grid">
+        <article class="feature-card gradient-card">
+          <div class="feature-icon">📌</div>
+          <h3 data-i18n="contextTitle">Contexte</h3>
+          <p data-i18n="contextText">
+            Stress, barrière de la langue, troubles de l’attention ou de la lecture : beaucoup de patients ont du mal à expliquer clairement leur situation.
+          </p>
+        </article>
+
+        <article class="feature-card gradient-card">
+          <div class="feature-icon">💡</div>
+          <h3 data-i18n="solutionTitle">Solution LabExplain</h3>
+          <p data-i18n="solutionText">
+            Un assistant guidé qui aide le patient à décrire ses symptômes, ses traitements et ses antécédents pour générer un résumé clair.
+          </p>
+        </article>
+
+        <article class="feature-card gradient-card">
+          <div class="feature-icon">⚖️</div>
+          <h3 data-i18n="positionTitle">Positionnement</h3>
+          <p data-i18n="positionText">
+            Un outil d’aide à la communication, pensé pour gagner du temps et améliorer l’échange avec le médecin.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block split-section">
+      <div class="split-left">
+        <span class="section-kicker">Comment ça marche ?</span>
+        <h2>Un parcours simple, rapide et rassurant</h2>
+
+        <div class="timeline">
+          <div class="timeline-step">
+            <div class="timeline-dot">1</div>
+            <div>
+              <h4>Vous renseignez votre situation</h4>
+              <p>Symptômes, durée, traitements, gêne principale ou informations utiles.</p>
+            </div>
+          </div>
+
+          <div class="timeline-step">
+            <div class="timeline-dot">2</div>
+            <div>
+              <h4>L’assistant structure les informations</h4>
+              <p>Le formulaire guidé reformule les éléments pour rendre l’échange plus clair.</p>
+            </div>
+          </div>
+
+          <div class="timeline-step">
+            <div class="timeline-dot">3</div>
+            <div>
+              <h4>Vous arrivez mieux préparé à la consultation</h4>
+              <p>Le médecin reçoit une information plus lisible, et le patient oublie moins de choses.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="split-right">
+        <div class="showcase-card">
+          <h3>Résultat attendu</h3>
+          <ul class="showcase-list">
+            <li>✔ Consultation plus fluide</li>
+            <li>✔ Informations mieux structurées</li>
+            <li>✔ Réduction du stress</li>
+            <li>✔ Meilleure accessibilité</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-head">
+        <span class="section-kicker">Accessibilité</span>
+        <h2 data-i18n="accessibilityTitle">🧩 Accessibilité</h2>
+        <p data-i18n="accessibilityText">
+          Choix de langue, polices adaptées, interface simple, parcours guidé, jargon limité et navigation pensée pour les profils fragiles.
+        </p>
+      </div>
+
+      <div class="access-grid">
+        <div class="access-card">
+          <h4>🌍 Multilingue</h4>
+          <p>Le patient peut interagir dans sa langue pour mieux décrire ce qu’il ressent.</p>
+        </div>
+        <div class="access-card">
+          <h4>🔤 Polices adaptées</h4>
+          <p>Modes malvoyant, dyslexique et TDAH pour une lecture plus confortable.</p>
+        </div>
+        <div class="access-card">
+          <h4>🧭 Parcours guidé</h4>
+          <p>Le formulaire évite la page blanche et aide à ne rien oublier.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block final-cta">
+      <div class="final-cta-card">
+        <span class="section-kicker">Prêt à commencer ?</span>
+        <h2>Préparez votre consultation autrement</h2>
+        <p>
+          Une interface simple, moderne et inclusive pour aider le patient à mieux communiquer avec le professionnel de santé.
+        </p>
+        <div class="hero-cta">
+          <a class="button primary big-btn" href="#" onclick="checkAuthAndRedirect(); return false;" data-i18n="startNow">Commencer</a>
+          <a class="button secondary big-btn" href="auth.html" data-i18n="login">Connexion</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© LabExplain 2025-2026</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

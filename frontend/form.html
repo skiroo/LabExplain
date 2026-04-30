@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LabExplain - Formulaire</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="form">
+  <header class="site-header glass-header">
+    <div class="logo"><a href="index.html">LabExplain</a></div>
+
+    <nav>
+      <a href="index.html" data-i18n="home">Accueil</a>
+      <a href="form.html" data-i18n="form">Formulaire</a>
+    </nav>
+
+    <div class="right">
+      <label class="sr-only" for="lang">Langue</label>
+      <select id="lang" aria-label="Choix de la langue">
+        <option value="fr">FR</option>
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="ar">AR</option>
+      </select>
+
+      <label class="sr-only" for="fontSelect">Police</label>
+      <select id="fontSelect" aria-label="Choix de la police">
+        <option value="standard">Standard</option>
+        <option value="malvoyant">Malvoyant</option>
+        <option value="dyslexique">Dyslexique</option>
+        <option value="tdah">TDAH</option>
+      </select>
+
+      <div class="dropdown" id="accountMenu" hidden>
+        <button id="btn-account" type="button" data-i18n="account">Compte ▾</button>
+        <div class="dropdown-content">
+          <button type="button" onclick="showProfile()" data-i18n="myProfile">Mon profil</button>
+          <button type="button" onclick="logout()" data-i18n="logout">Déconnexion</button>
+        </div>
+      </div>
+
+      <a href="auth.html" id="loginLink" data-i18n="login">Connexion</a>
+    </div>
+  </header>
+
+  <main class="form-premium-page">
+    <section class="form-hero">
+      <div class="form-hero-left">
+        <span class="section-kicker">LabExplain</span>
+        <h1 data-i18n="form">Formulaire</h1>
+        <p class="form-hero-text">
+          Préparez votre consultation dans un espace clair, rassurant et adapté à vos besoins.
+        </p>
+
+        <div class="form-hero-badges">
+          <span class="trust-pill">🧠 Guidé pas à pas</span>
+          <span class="trust-pill">🌍 Multilingue</span>
+          <span class="trust-pill">🩺 Sans diagnostic</span>
+        </div>
+      </div>
+
+      <div class="form-hero-right">
+        <div class="mini-medical-card">
+          <strong data-i18n="medicalFrameTitle">Cadre médical</strong>
+          <p data-i18n="medicalFrameText">
+            LabExplain ne pose aucun diagnostic et ne remplace pas un professionnel de santé.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-layout-premium">
+      <aside class="form-sidebar">
+        <div class="sidebar-card">
+          <h3>Navigation</h3>
+          <div id="menuForm" class="sidebar-menu"></div>
+        </div>
+
+        <div class="sidebar-card soft-card">
+          <h3>Pourquoi ce formulaire ?</h3>
+          <p>
+            Il aide à structurer vos informations avant le rendez-vous pour réduire le stress
+            et éviter les oublis.
+          </p>
+        </div>
+
+        <div class="sidebar-card soft-card">
+          <h3>Conseil</h3>
+          <p>
+            Prenez quelques minutes pour répondre calmement. Plus les informations sont claires,
+            plus la consultation sera fluide.
+          </p>
+        </div>
+      </aside>
+
+      <section class="form-main-panel">
+        <div class="panel-topbar">
+          <div>
+            <span class="section-kicker">Espace patient / médecin</span>
+            <h2>Préparation de consultation</h2>
+          </div>
+          <div class="panel-status">
+            <span class="status-pill">Sécurisé</span>
+            <span class="status-pill">Accessible</span>
+          </div>
+        </div>
+
+        <div id="content" class="form-content-box"></div>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <p>© LabExplain 2025-2026</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
