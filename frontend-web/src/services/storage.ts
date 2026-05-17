@@ -1,3 +1,13 @@
+/*
+Fichier : storage.ts
+Dossier : src/services/
+Description :
+  Gère les données locales du frontend LabExplain.
+  Le backend Flask devient progressivement la source principale pour les utilisateurs,
+  mais le localStorage reste utilisé pour l'utilisateur connecté, la langue, la police
+  et certaines données temporaires encore utilisées par l'interface.
+*/
+
 import { demoUsers } from "../data/demoUsers";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
@@ -20,6 +30,7 @@ export function setUsers(users: User[]) {
 }
 
 export function seedUsers() {
+  // Fonction gardée temporairement pour ne pas casser les anciennes pages
   if (getUsers().length === 0) {
     setUsers(demoUsers);
   }
@@ -38,6 +49,7 @@ export function removeCurrentUser() {
 }
 
 export function getDoctors(): User[] {
+  // Fonction temporaire, sera remplacée par un appel à /api/doctors
   return getUsers().filter((user) => user.role === "medecin");
 }
 

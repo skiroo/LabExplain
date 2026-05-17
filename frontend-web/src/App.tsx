@@ -9,7 +9,6 @@ import {
   getCurrentUser,
   getStoredFont,
   getStoredLang,
-  seedUsers,
   setStoredFont,
   setStoredLang,
 } from "./services/storage";
@@ -22,7 +21,6 @@ function App() {
   const [user, setUser] = useState<User | null>(getCurrentUser());
 
   useEffect(() => {
-    seedUsers();
     setUser(getCurrentUser());
   }, []);
 
@@ -69,6 +67,7 @@ function App() {
             />
           }
         />
+
         <Route
           path="/connexion"
           element={
@@ -82,6 +81,7 @@ function App() {
             />
           }
         />
+
         <Route
           path="/inscription"
           element={
@@ -95,6 +95,7 @@ function App() {
             />
           }
         />
+
         <Route
           path="/formulaire"
           element={

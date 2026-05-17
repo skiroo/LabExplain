@@ -1,4 +1,5 @@
-import { FormEvent, useState } from "react";
+import { useState } from "react";
+import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import { translate } from "../data/translations";
@@ -15,14 +16,23 @@ type RegisterPageProps = {
   onUserChange: () => void;
 };
 
-function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChange }: RegisterPageProps) {
+function RegisterPage({
+  lang,
+  font,
+  user,
+  onLangChange,
+  onFontChange,
+  onUserChange,
+}: RegisterPageProps) {
   const navigate = useNavigate();
   const [role, setRole] = useState<UserRole>("patient");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
+
     const newUser: User = {
       nom: String(formData.get("nom") || "").trim(),
       prenom: String(formData.get("prenom") || "").trim(),
@@ -42,12 +52,18 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
       newUser.allergies = String(formData.get("allergies") || "");
     }
 
-    const result = registerUser(newUser);
+    setLoading(true);
+
+    const result = await registerUser(newUser);
+
+    setLoading(false);
+
     if (!result.success) {
       alert(result.message);
       return;
     }
 
+    onUserChange();
     navigate("/connexion");
   }
 
@@ -72,11 +88,22 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
             <div className="form-grid two">
               <div>
                 <label htmlFor="nom">{translate(lang, "lastName")}</label>
-                <input id="nom" name="nom" placeholder={translate(lang, "lastName")} required />
+                <input
+                  id="nom"
+                  name="nom"
+                  placeholder={translate(lang, "lastName")}
+                  required
+                />
               </div>
+
               <div>
                 <label htmlFor="prenom">{translate(lang, "firstName")}</label>
-                <input id="prenom" name="prenom" placeholder={translate(lang, "firstName")} required />
+                <input
+                  id="prenom"
+                  name="prenom"
+                  placeholder={translate(lang, "firstName")}
+                  required
+                />
               </div>
             </div>
 
@@ -84,10 +111,20 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
             <input id="email" name="email" type="email" placeholder="Email" required />
 
             <label htmlFor="password">{translate(lang, "password")}</label>
-            <input id="password" name="password" type="password" placeholder={translate(lang, "password")} required />
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder={translate(lang, "password")}
+              required
+            />
 
             <label htmlFor="role">{translate(lang, "role")}</label>
-            <select id="role" value={role} onChange={(event) => setRole(event.target.value as UserRole)}>
+            <select
+              id="role"
+              value={role}
+              onChange={(event) => setRole(event.target.value as UserRole)}
+            >
               <option value="patient">{translate(lang, "patient")}</option>
               <option value="medecin">{translate(lang, "medecin")}</option>
             </select>
@@ -99,6 +136,7 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                     <label htmlFor="birthdate">{translate(lang, "birthdate")}</label>
                     <input type="date" id="birthdate" name="birthdate" />
                   </div>
+
                   <div>
                     <label htmlFor="gender">{translate(lang, "gender")}</label>
                     <select id="gender" name="gender">
@@ -112,22 +150,50 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                 <div className="form-grid two">
                   <div>
                     <label htmlFor="weight">{translate(lang, "weight")}</label>
-                    <input type="number" id="weight" name="weight" min="0" placeholder={translate(lang, "weight")} />
+                    <input
+                      type="number"
+                      id="weight"
+                      name="weight"
+                      min="0"
+                      placeholder={translate(lang, "weight")}
+                    />
                   </div>
+
                   <div>
                     <label htmlFor="height">{translate(lang, "height")}</label>
-                    <input type="number" id="height" name="height" min="0" placeholder={translate(lang, "height")} />
+                    <input
+                      type="number"
+                      id="height"
+                      name="height"
+                      min="0"
+                      placeholder={translate(lang, "height")}
+                    />
                   </div>
                 </div>
 
                 <label htmlFor="antecedents">{translate(lang, "antecedents")}</label>
-                <textarea id="antecedents" name="antecedents" rows={3} placeholder={translate(lang, "antecedents")} />
+                <textarea
+                  id="antecedents"
+                  name="antecedents"
+                  rows={3}
+                  placeholder={translate(lang, "antecedents")}
+                />
 
                 <label htmlFor="traitements">{translate(lang, "treatments")}</label>
-                <textarea id="traitements" name="traitements" rows={3} placeholder={translate(lang, "treatments")} />
+                <textarea
+                  id="traitements"
+                  name="traitements"
+                  rows={3}
+                  placeholder={translate(lang, "treatments")}
+                />
 
                 <label htmlFor="allergies">{translate(lang, "allergies")}</label>
-                <textarea id="allergies" name="allergies" rows={3} placeholder={translate(lang, "allergies")} />
+                <textarea
+                  id="allergies"
+                  name="allergies"
+                  rows={3}
+                  placeholder={translate(lang, "allergies")}
+                />
               </div>
             )}
 
@@ -136,7 +202,9 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
               <span>{translate(lang, "consentText")}</span>
             </label>
 
-            <button type="submit">{translate(lang, "valider")}</button>
+            <button type="submit" disabled={loading}>
+              {loading ? "Création du compte..." : translate(lang, "valider")}
+            </button>
           </form>
         </section>
       </main>

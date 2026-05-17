@@ -1,42 +1,75 @@
-import { getUsers, removeCurrentUser, setCurrentUser, setUsers } from "./storage";
+/*
+Fichier : auth.ts
+Dossier : src/services/
+Description :
+  Contient les fonctions d'authentification du frontend LabExplain.
+  Ces fonctions appellent le backend Flask pour connecter ou inscrire un utilisateur.
+*/
+
+import { removeCurrentUser, setCurrentUser } from "./storage";
+import { apiPost } from "./api";
 import type { User } from "../types/user";
 
-export function loginUser(email: string, password: string): User | null {
+type LoginResponse = {
+  token: string;
+  user: User;
+};
+
+export async function loginUser(
+  email: string,
+  password: string
+): Promise<User | null> {
   const cleanEmail = email.trim().toLowerCase();
 
-  const user = getUsers().find(
-    (item) => item.email.toLowerCase() === cleanEmail && item.password === password
-  );
+  try {
+    // Envoie les identifiants au backend Flask
+    const response = await apiPost<LoginResponse>("/auth/login", {
+      email: cleanEmail,
+      password,
+    });
 
-  if (!user) {
+    if (!response.success || !response.data) {
+      return null;
+    }
+
+    // Stocke l'utilisateur connecté côté frontend
+    setCurrentUser(response.data.user);
+    localStorage.setItem("labexplain_token", response.data.token);
+
+    return response.data.user;
+  } catch (error) {
+    console.error("Erreur login :", error);
     return null;
   }
-
-  setCurrentUser(user);
-  return user;
 }
 
-export function registerUser(newUser: User): { success: boolean; message?: string } {
-  const users = getUsers();
-  const emailExists = users.some(
-    (user) => user.email.toLowerCase() === newUser.email.toLowerCase()
-  );
+export async function registerUser(
+  newUser: User
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    // Envoie les informations d'inscription au backend Flask
+    const response = await apiPost<User>("/auth/register", newUser);
 
-  if (emailExists) {
-    return { success: false, message: "Cet email existe déjà." };
-  }
+    if (!response.success) {
+      return {
+        success: false,
+        message: response.message || "Erreur lors de l'inscription.",
+      };
+    }
 
-  if (!newUser.consent) {
+    return { success: true };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Erreur lors de l'inscription.";
+
     return {
       success: false,
-      message: "Vous devez accepter l’enregistrement local des données.",
+      message,
     };
   }
-
-  setUsers([...users, newUser]);
-  return { success: true };
 }
 
 export function logoutUser() {
   removeCurrentUser();
+  localStorage.removeItem("labexplain_token");
 }
