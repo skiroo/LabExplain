@@ -1,0 +1,5 @@
+-- Fichier : schema.sql
+-- Dossier : backend/database/
+-- Description :
+--     Crée la base de données MySQL de LabExplain ainsi que les tables principales.
+--     Ce fichier définit la structure des données utilisées par le backend Flask.

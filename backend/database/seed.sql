@@ -1,0 +1,6 @@
+-- Fichier : seed.sql
+-- Dossier : backend/database/
+-- Description :
+--     Insère des données de test dans la base de données LabExplain.
+--     Ce fichier permet de tester rapidement la connexion, l'inscription,
+--     la connexion utilisateur et l'affichage des médecins.
