@@ -50,6 +50,9 @@ function Header({
           <button type="button" className="nav-button" onClick={goToForm}>
             {translate(lang, "form")}
           </button>
+          {user && user.role === "patient" && (
+            <Link to="/dashboard">Mon espace</Link>
+          )}
         </nav>
       )}
 
@@ -94,9 +97,9 @@ function Header({
               {translate(lang, "account")}
             </button>
             <div className="dropdown-content">
-              <button type="button" onClick={() => alert("Page profil à compléter.")}>
+              <Link to="/dashboard">
                 {translate(lang, "myProfile")}
-              </button>
+              </Link>
               <button type="button" onClick={handleLogout}>
                 {translate(lang, "logout")}
               </button>

@@ -5,6 +5,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import FormPage from "./pages/FormPage";
+import DashboardPage from "./pages/DashboardPage";
 import {
   getCurrentUser,
   getStoredFont,
@@ -100,6 +101,20 @@ function App() {
           path="/formulaire"
           element={
             <FormPage
+              lang={lang}
+              font={font}
+              user={user}
+              onLangChange={handleLangChange}
+              onFontChange={handleFontChange}
+              onUserChange={refreshUser}
+            />
+          }
+        />
+
+        <Route
+          path="/dashboard"
+          element={
+            <DashboardPage
               lang={lang}
               font={font}
               user={user}
