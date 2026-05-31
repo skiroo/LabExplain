@@ -53,6 +53,7 @@ function Header({
           {user && user.role === "patient" && (
             <Link to="/dashboard">Mon espace</Link>
           )}
+          <Link to="/about">À propos</Link>
         </nav>
       )}
 
@@ -100,6 +101,7 @@ function Header({
               <Link to="/dashboard">
                 {translate(lang, "myProfile")}
               </Link>
+              <Link to="/parametres">Paramètres</Link>
               <button type="button" onClick={handleLogout}>
                 {translate(lang, "logout")}
               </button>

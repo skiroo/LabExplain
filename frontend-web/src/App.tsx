@@ -6,6 +6,9 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import FormPage from "./pages/FormPage";
 import DashboardPage from "./pages/DashboardPage";
+import ResultPage from "./pages/ResultPage";
+import AboutPage from "./pages/AboutPage";
+import SettingsPage from "./pages/SettingsPage";
 import {
   getCurrentUser,
   getStoredFont,
@@ -32,7 +35,6 @@ function App() {
 
   useEffect(() => {
     document.body.classList.remove("font-malvoyant", "font-dyslexique", "font-tdah");
-
     if (font !== "standard") {
       document.body.classList.add(`font-${font}`);
     }
@@ -115,6 +117,48 @@ function App() {
           path="/dashboard"
           element={
             <DashboardPage
+              lang={lang}
+              font={font}
+              user={user}
+              onLangChange={handleLangChange}
+              onFontChange={handleFontChange}
+              onUserChange={refreshUser}
+            />
+          }
+        />
+
+        <Route
+          path="/resultat"
+          element={
+            <ResultPage
+              lang={lang}
+              font={font}
+              user={user}
+              onLangChange={handleLangChange}
+              onFontChange={handleFontChange}
+              onUserChange={refreshUser}
+            />
+          }
+        />
+
+        <Route
+          path="/about"
+          element={
+            <AboutPage
+              lang={lang}
+              font={font}
+              user={user}
+              onLangChange={handleLangChange}
+              onFontChange={handleFontChange}
+              onUserChange={refreshUser}
+            />
+          }
+        />
+
+        <Route
+          path="/parametres"
+          element={
+            <SettingsPage
               lang={lang}
               font={font}
               user={user}
