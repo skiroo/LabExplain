@@ -50,7 +50,7 @@ function Header({
           <button type="button" className="nav-button" onClick={goToForm}>
             {translate(lang, "form")}
           </button>
-          {user && user.role === "patient" && (
+          {user && (user.role === "patient" || user.role === "medecin") && (
             <Link to="/dashboard">Mon espace</Link>
           )}
           <Link to="/about">À propos</Link>
@@ -101,8 +101,10 @@ function Header({
               <Link to="/dashboard">
                 {translate(lang, "myProfile")}
               </Link>
+              <hr />
               <Link to="/parametres">Paramètres</Link>
-              <button type="button" onClick={handleLogout}>
+              <hr />
+              <button type="button" className="logout-btn" onClick={handleLogout}>
                 {translate(lang, "logout")}
               </button>
             </div>
