@@ -7,20 +7,30 @@
 CREATE DATABASE IF NOT EXISTS labexplain_db
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
- 
+
 USE labexplain_db;
- 
+
+
+-- Table : Medecin
+-- Enrichie avec les colonnes du répertoire AMELI (data.gouv.fr)
 
 CREATE TABLE IF NOT EXISTS Medecin (
-    id_medecin  INT             NOT NULL AUTO_INCREMENT,
-    nom         VARCHAR(100)    NOT NULL,
-    prenom      VARCHAR(100)    NOT NULL,
-    email       VARCHAR(255)    NOT NULL UNIQUE,
-    specialite  VARCHAR(150),
+    id_medecin              INT             NOT NULL AUTO_INCREMENT,
+    nom                     VARCHAR(100)    NOT NULL,
+    prenom                  VARCHAR(100)    NOT NULL,
+    civilite                VARCHAR(10),
+    email                   VARCHAR(255)    UNIQUE,
+    specialite              VARCHAR(150),
+    adresse                 VARCHAR(255),
+    code_postal             VARCHAR(10),
+    ville                   VARCHAR(100),
+    telephone               VARCHAR(20),
+    secteur_conventionnel   VARCHAR(100),
+    nature_exercice         VARCHAR(100),
     PRIMARY KEY (id_medecin)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4; -- encodeur pour accepter les caractères spéciaux 
- 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Table : Patient
 CREATE TABLE IF NOT EXISTS Patient (
     id_patient      INT             NOT NULL AUTO_INCREMENT,
     nom             VARCHAR(100)    NOT NULL,
@@ -28,8 +38,8 @@ CREATE TABLE IF NOT EXISTS Patient (
     date_naissance  DATE            NOT NULL,
     PRIMARY KEY (id_patient)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- 
 
+-- Table : Consultation
 CREATE TABLE IF NOT EXISTS Consultation (
     id_consultation INT             NOT NULL AUTO_INCREMENT,
     date_heure      DATETIME        NOT NULL,
@@ -44,8 +54,8 @@ CREATE TABLE IF NOT EXISTS Consultation (
         FOREIGN KEY (id_patient) REFERENCES Patient(id_patient)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- 
 
+-- Table : QuestionnairePreparation
 CREATE TABLE IF NOT EXISTS QuestionnairePreparation (
     id_questionnaire    INT         NOT NULL AUTO_INCREMENT,
     date_soumission     DATETIME,
@@ -56,8 +66,8 @@ CREATE TABLE IF NOT EXISTS QuestionnairePreparation (
         FOREIGN KEY (id_consultation) REFERENCES Consultation(id_consultation)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- 
 
+-- Table : SyntheseIA
 CREATE TABLE IF NOT EXISTS SyntheseIA (
     id_synthese         INT             NOT NULL AUTO_INCREMENT,
     motif_principal     VARCHAR(255)    NOT NULL,
