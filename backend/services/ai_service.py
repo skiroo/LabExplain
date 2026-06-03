@@ -2,30 +2,20 @@
 Fichier : ai_service.py
 Dossier : backend/services/
 Description :
-    Contient les fonctions liées au traitement IA de LabExplain.
-    Pour l'instant, ce fichier retourne une réponse temporaire afin de tester l'API.
+    Point de compatibilité ascendante pour les anciens imports du module IA.
+    La logique réelle est désormais dans le package backend/ai/.
 
-À compléter plus tard :
-    Maxime devra remplacer la réponse temporaire par un vrai module IA capable
-    de générer un résumé structuré et des questions pertinentes sans diagnostic médical.
+    Ce fichier délègue directement aux handlers du module ai/,
+    permettant aux éventuels imports existants de continuer à fonctionner
+    sans modification.
 """
 
+from ai.summary_handler import generate_summary
+from ai.chat_handler import chat_turn
+from ai.translate_handler import translate_summary
 
-def generate_summary(data):
-    """
-    Génère temporairement un résumé à partir des informations patient.
-    """
-    # TODO Maxime : remplacer cette logique temporaire par le vrai traitement IA
-    symptoms = data.get("symptoms")
-    language = data.get("language", "fr")
-
-    return {
-        "language": language,
-        "summary": f"Résumé temporaire des symptômes : {symptoms}",
-        "questions": [
-            "Depuis quand les symptômes ont-ils commencé ?",
-            "Les symptômes sont-ils constants ou ponctuels ?",
-            "Avez-vous pris un traitement récemment ?"
-        ],
-        "warning": "Ce résumé ne constitue pas un diagnostic médical."
-    }
+__all__ = [
+    "generate_summary",
+    "chat_turn",
+    "translate_summary",
+]
