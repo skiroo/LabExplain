@@ -21,3 +21,11 @@ class Config:
     MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")        # Mot de passe à ajouter après avoir créer la connexion MySQL
     MYSQL_DB = os.getenv("MYSQL_DB", "labexplain_db")
     MYSQL_CURSORCLASS = os.getenv("MYSQL_CURSORCLASS", "DictCursor")
+
+    # ── Configuration Ollama ─────────────────────────────────────────────────
+    # URL de base d'Ollama (local par défaut, modifiable via .env pour Docker ou remote)
+    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    # Modèle utilisé pour la génération IA (ex: llama3.2, mistral, gemma3)
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
+    # Timeout en secondes pour les appels synchrones à Ollama
+    OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "60"))
