@@ -1,85 +1,60 @@
 -- Fichier : seed.sql
 -- Dossier : backend/database/
 -- Description :
---     Insère des données de test dans la base de données LabExplain.
---     Ce fichier permet de tester rapidement la connexion, l'inscription,
---     la connexion utilisateur et l'affichage des médecins.
+--     Données de test pour le nouveau schéma RGPD Option B.
+--     Les mots de passe sont hashés bcrypt.
+--     Les données médicales sont chiffrées (simulées ici avec des placeholders).
+--
+--     Mot de passe de test pour tous les comptes : "1234"
+--     Hash bcrypt correspondant généré avec 12 rounds.
+
+USE defaultdb;
+
+-- ============================================================
+-- Comptes d'authentification
+-- password_hash = bcrypt("1234", 12)
+-- ============================================================
+INSERT INTO Compte (email, password_hash, role, email_verifie, consent, consent_date, encryption_salt)
+VALUES
+    ('patient@test.com',  '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMeSSSmIa2J1A8J5MBp2tqW7Gy', 'patient', TRUE,  TRUE, NOW(), 'salt_demo_patient_001'),
+    ('patient2@test.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMeSSSmIa2J1A8J5MBp2tqW7Gy', 'patient', TRUE,  TRUE, NOW(), 'salt_demo_patient_002'),
+    ('medecin@test.com',  '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMeSSSmIa2J1A8J5MBp2tqW7Gy', 'medecin', TRUE,  TRUE, NOW(), NULL),
+    ('medecin2@test.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMeSSSmIa2J1A8J5MBp2tqW7Gy', 'medecin', FALSE, TRUE, NOW(), NULL);
 
 
- 
-USE labexplain_db;
- 
+-- ============================================================
+-- Patients (données d'identité pseudonymisées)
+-- ============================================================
+INSERT INTO Patient (nom, prenom, date_naissance, gender, id_compte)
+VALUES
+    ('Dupont',  'Jean',   '1990-05-12', 'M', 1),
+    ('Martin',  'Sophie', '1985-09-23', 'F', 2);
 
-INSERT INTO Medecin (nom, prenom, email, specialite) VALUES
-    ('Martin',   'Thomas',   'medecin@test.com',         'Médecin généraliste'),
-    ('Bernard',  'Sophie',   'sophie.bernard@test.com',  'Cardiologue'),
-    ('Leclerc',  'Paul',     'paul.leclerc@test.com',    'Pédiatre');
- 
 
-INSERT INTO Patient (nom, prenom, date_naissance) VALUES
-    ('Dupont',  'Jean',   '2015-05-12'),
-    ('Moreau',  'Claire', '1990-03-22'),
-    ('Girard',  'Lucas',  '1985-11-08');
- 
+-- ============================================================
+-- Médecins (informations professionnelles)
+-- ============================================================
+INSERT INTO Medecin (nom, prenom, specialite, id_compte)
+VALUES
+    ('Bernard',  'Pierre',  'Médecin généraliste', 3),
+    ('Leclerc',  'Marie',   'Pédiatre',            4);
 
-INSERT INTO Consultation (date_heure, statut, id_medecin, id_patient) VALUES
-    ('2025-05-10 09:00:00', 'terminée',   1, 1),
-    ('2025-05-12 14:30:00', 'terminée',   1, 2),
-    ('2025-05-20 10:00:00', 'planifiée',  2, 3),
-    ('2025-05-22 11:15:00', 'planifiée',  3, 1);
- 
 
-INSERT INTO QuestionnairePreparation (date_soumission, donnees_brutes, id_consultation) VALUES
-(
-    '2025-05-09 18:00:00',
-    '{
-        "symptomes": ["toux", "fièvre", "difficultés respiratoires"],
-        "duree": "5 jours",
-        "intensite": "modérée",
-        "antecedents": "Asthme",
-        "traitements_en_cours": "Ventoline",
-        "allergies": "Pollen"
-    }',
-    1
-),
-(
-    '2025-05-11 20:30:00',
-    '{
-        "symptomes": ["fatigue", "douleurs thoraciques", "essoufflement"],
-        "duree": "2 semaines",
-        "intensite": "élevée",
-        "antecedents": "Hypertension",
-        "traitements_en_cours": "Amlodipine",
-        "allergies": "Aucune"
-    }',
-    2
-),
-(
-    '2025-05-19 17:00:00',
-    '{
-        "symptomes": ["maux de tête", "nausées", "vision floue"],
-        "duree": "3 jours",
-        "intensite": "modérée",
-        "antecedents": "Aucun",
-        "traitements_en_cours": "Aucun",
-        "allergies": "Pénicilline"
-    }',
-    3
-);
- 
+-- ============================================================
+-- Données médicales chiffrées (placeholders pour les tests)
+-- En production ces valeurs seront générées par le backend Python
+-- avec AES-256-GCM et la clé dérivée du mot de passe utilisateur.
+-- ============================================================
+INSERT INTO DonneesPatient (id_patient, antecedents_enc, traitements_enc, allergies_enc, poids_enc, taille_enc)
+VALUES
+    (1, 'DEMO_ENCRYPTED_asthme',    'DEMO_ENCRYPTED_ventoline', 'DEMO_ENCRYPTED_pollen', 'DEMO_ENCRYPTED_70', 'DEMO_ENCRYPTED_175'),
+    (2, 'DEMO_ENCRYPTED_diabete',   'DEMO_ENCRYPTED_metformine', NULL,                    'DEMO_ENCRYPTED_60', 'DEMO_ENCRYPTED_165');
 
-INSERT INTO SyntheseIA (motif_principal, symptomes_cles, questions_patient, modele_ia_utilise, id_questionnaire) VALUES
-(
-    'Syndrome respiratoire avec fièvre chez un enfant asthmatique',
-    '["toux persistante", "fièvre à 38.5°C", "difficultés respiratoires"]',
-    '["La Ventoline est-elle toujours efficace ?", "L''asthme est-il bien contrôlé ?", "Y a-t-il des signes de surinfection ?"]',
-    'BioMistral-7B-test',
-    1
-),
-(
-    'Douleurs thoraciques avec essoufflement chez une patiente hypertendue',
-    '["douleurs thoraciques", "essoufflement à l''effort", "fatigue inhabituelle"]',
-    '["Les douleurs irradient-elles vers le bras gauche ?", "L''hypertension est-elle bien contrôlée ?", "Un ECG récent a-t-il été réalisé ?"]',
-    'BioMistral-7B-test',
-    2
-);
+
+-- ============================================================
+-- Consultations
+-- ============================================================
+INSERT INTO Consultation (date_heure, statut, langue, id_medecin, id_patient)
+VALUES
+    (NOW(), 'draft', 'fr', 1, 1),
+    (NOW(), 'sent',  'fr', 2, 2);
