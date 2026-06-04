@@ -2,74 +2,104 @@
 Fichier : auth.ts
 Dossier : src/services/
 Description :
-  Contient les fonctions d'authentification du frontend LabExplain.
-  Ces fonctions appellent le backend Flask pour connecter ou inscrire un utilisateur.
+  Fonctions d'authentification — nouveau schéma RGPD Option B.
+  - loginUser  : connexion + stockage id_compte dans localStorage
+  - registerUser : inscription (renvoie vers page d'attente email)
+  - logoutUser : appelle POST /api/auth/logout puis nettoie le localStorage
+  - confirmEmail : valide le token depuis l'URL de confirmation
 */
 
 import { removeCurrentUser, setCurrentUser } from "./storage";
-import { apiPost } from "./api";
+import { apiPost, apiGet } from "./api";
 import type { User } from "../types/user";
 
 type LoginResponse = {
-  token: string;
-  user: User;
+    token: string;
+    user:  User;
+};
+
+type ConfirmResponse = {
+    email: string;
+    role:  string;
 };
 
 export async function loginUser(
-  email: string,
-  password: string
-): Promise<User | null> {
-  const cleanEmail = email.trim().toLowerCase();
+    email: string,
+    password: string
+): Promise<{ user: User | null; message?: string }> {
+    const cleanEmail = email.trim().toLowerCase();
 
-  try {
-    // Envoie les identifiants au backend Flask
-    const response = await apiPost<LoginResponse>("/auth/login", {
-      email: cleanEmail,
-      password,
-    });
+    try {
+        const response = await apiPost<LoginResponse>("/auth/login", {
+            email: cleanEmail,
+            password,
+        });
 
-    if (!response.success || !response.data) {
-      return null;
+        if (!response.success || !response.data) {
+            return { user: null, message: response.message };
+        }
+
+        // Stocke l'utilisateur complet — id_compte est inclus dans user
+        setCurrentUser(response.data.user);
+        localStorage.setItem("labexplain_token", response.data.token);
+
+        return { user: response.data.user };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Email ou mot de passe incorrect.";
+        return { user: null, message };
     }
-
-    // Stocke l'utilisateur connecté côté frontend
-    setCurrentUser(response.data.user);
-    localStorage.setItem("labexplain_token", response.data.token);
-
-    return response.data.user;
-  } catch (error) {
-    console.error("Erreur login :", error);
-    return null;
-  }
 }
 
 export async function registerUser(
-  newUser: User
+    newUser: User & { specialite?: string }
 ): Promise<{ success: boolean; message?: string }> {
-  try {
-    // Envoie les informations d'inscription au backend Flask
-    const response = await apiPost<User>("/auth/register", newUser);
+    try {
+        const response = await apiPost<User>("/auth/register", newUser);
 
-    if (!response.success) {
-      return {
-        success: false,
-        message: response.message || "Erreur lors de l'inscription.",
-      };
+        if (!response.success) {
+            return {
+                success: false,
+                message: response.message || "Erreur lors de l'inscription.",
+            };
+        }
+
+        return { success: true };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Erreur lors de l'inscription.";
+        return { success: false, message };
     }
-
-    return { success: true };
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Erreur lors de l'inscription.";
-
-    return {
-      success: false,
-      message,
-    };
-  }
 }
 
-export function logoutUser() {
-  removeCurrentUser();
-  localStorage.removeItem("labexplain_token");
+export async function logoutUser(): Promise<void> {
+    try {
+        // Notifie le backend — déclenche l'email de déconnexion
+        await apiPost("/auth/logout", {});
+    } catch {
+        // Silencieux — on nettoie le localStorage de toute façon
+    }
+    removeCurrentUser();
+    localStorage.removeItem("labexplain_token");
+}
+
+export async function confirmEmail(
+    token: string
+): Promise<{ success: boolean; message?: string; email?: string }> {
+    try {
+        const response = await apiGet<ConfirmResponse>(
+            `/auth/confirm-email?token=${encodeURIComponent(token)}`
+        );
+
+        if (!response.success) {
+            return { success: false, message: response.message };
+        }
+
+        return {
+            success: true,
+            email:   response.data?.email,
+            message: response.message,
+        };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Erreur de confirmation.";
+        return { success: false, message };
+    }
 }
