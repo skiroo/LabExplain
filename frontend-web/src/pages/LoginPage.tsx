@@ -29,17 +29,17 @@ function LoginPage({ lang, font, user, onLangChange, onFontChange, onUserChange 
         setIsLoading(true);
         setErrorMsg("");
 
-        const loggedUser = await loginUser(email, password);
+        const { user: loggedUser, message } = await loginUser(email, password);
 
         setIsLoading(false);
 
         if (!loggedUser) {
-            setErrorMsg(translate(lang, "badLogin"));
+            setErrorMsg(message || translate(lang, "badLogin"));
             return;
         }
 
         onUserChange();
-        const from = (location.state as { from?: string })?.from || "/";
+        const from = (location.state as { from?: string })?.from || "/dashboard";
         navigate(from);
     }
 
@@ -84,11 +84,11 @@ function LoginPage({ lang, font, user, onLangChange, onFontChange, onUserChange 
                             required
                         />
 
-                        <button type="submit" disabled={isLoading}>
-                            {isLoading ? "Connexion..." : translate(lang, "login")}
-                        </button>
-
                         {errorMsg && <p className="error-inline">{errorMsg}</p>}
+
+                        <button type="submit" disabled={isLoading}>
+                            {isLoading ? translate(lang, "loading") || "Connexion..." : translate(lang, "login")}
+                        </button>
                     </form>
 
                     <p className="muted">{translate(lang, "noaccount")}</p>
