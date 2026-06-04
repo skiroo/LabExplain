@@ -2,27 +2,51 @@
 Fichier : doctor_service.py
 Dossier : backend/services/
 Description :
-    Contient la logique métier liée aux médecins.
-    Ce fichier permet de récupérer la liste des médecins disponibles et les informations
-    d'un médecin précis dans le backend LabExplain.
+    Logique métier liée aux médecins — nouveau schéma.
+    La table Medecin n'a plus d'email directement : on joint avec Compte.
 """
 
-from database.temp_data import doctors
+from database.db import mysql
 
 
 def get_all_doctors():
     """
-    Retourne la liste temporaire des médecins.
+    Retourne la liste de tous les médecins avec leur email depuis Compte.
     """
-    return doctors
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT m.id_medecin, m.nom, m.prenom, m.specialite, c.email
+            FROM Medecin m
+            JOIN Compte c ON c.id_compte = m.id_compte
+            ORDER BY m.nom, m.prenom
+            """
+        )
+        return cursor.fetchall()
+    except Exception:
+        return []
+    finally:
+        cursor.close()
 
 
-def get_doctor_by_id(doctor_id):
+def get_doctor_by_id(doctor_id: int):
     """
-    Recherche un médecin à partir de son identifiant.
+    Retourne un médecin précis avec son email.
     """
-    for doctor in doctors:
-        if doctor["id"] == doctor_id:
-            return doctor
-
-    return None
+    cursor = mysql.connection.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT m.id_medecin, m.nom, m.prenom, m.specialite, c.email
+            FROM Medecin m
+            JOIN Compte c ON c.id_compte = m.id_compte
+            WHERE m.id_medecin = %s
+            """,
+            (doctor_id,)
+        )
+        return cursor.fetchone()
+    except Exception:
+        return None
+    finally:
+        cursor.close()
