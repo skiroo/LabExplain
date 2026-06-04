@@ -17,10 +17,14 @@ class Config:
     Classe de configuration utilisée par Flask.
     """
     MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
+    MYSQL_PORT = int(os.getenv("MYSQL_PORT", 3306))
     MYSQL_USER = os.getenv("MYSQL_USER", "root")
-    MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")        # Mot de passe à ajouter après avoir créer la connexion MySQL
-    MYSQL_DB = os.getenv("MYSQL_DB", "labexplain_db")
+    MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")
+    MYSQL_DB = os.getenv("MYSQL_DB", "defaultdb")
     MYSQL_CURSORCLASS = os.getenv("MYSQL_CURSORCLASS", "DictCursor")
+
+    # SSL obligatoire pour Aiven
+    MYSQL_SSL = {"ssl": {}}
 
     # ── Configuration Ollama ─────────────────────────────────────────────────
     # URL de base d'Ollama (local par défaut, modifiable via .env pour Docker ou remote)

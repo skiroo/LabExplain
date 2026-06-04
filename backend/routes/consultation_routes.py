@@ -3,8 +3,7 @@ Fichier : consultation_routes.py
 Dossier : backend/routes/
 Description :
     Définit les routes liées aux consultations.
-    Ces routes permettent au frontend web et au frontend mobile de créer,
-    récupérer et supprimer les consultations préparées par les patients.
+    Le patient_id est extrait du header X-User-Id (en attendant JWT).
 """
 
 from flask import Blueprint, request
@@ -19,14 +18,27 @@ from utils.response import success_response, error_response
 consultation_bp = Blueprint("consultations", __name__)
 
 
+def get_user_id_from_request():
+    """
+    Récupère l'identifiant utilisateur depuis le header X-User-Id.
+    À remplacer plus tard par un vrai décodage de token JWT.
+    """
+    return request.headers.get("X-User-Id")
+
+
 @consultation_bp.route("/", methods=["POST"])
 def create():
     """
-    Crée une nouvelle consultation.
+    Crée une nouvelle consultation liée au patient connecté.
     """
+    patient_id = get_user_id_from_request()
+
+    if not patient_id:
+        return error_response("Utilisateur non identifié", 401)
+
     data = request.get_json()
 
-    consultation, error = create_consultation(data)
+    consultation, error = create_consultation(data, patient_id)
 
     if error:
         return error_response(error, 400)
@@ -37,9 +49,12 @@ def create():
 @consultation_bp.route("/", methods=["GET"])
 def get_consultations():
     """
-    Retourne toutes les consultations créées.
+    Retourne les consultations.
+    Si le header X-User-Id est présent, retourne uniquement celles du patient connecté.
     """
-    consultations = get_all_consultations()
+    patient_id = get_user_id_from_request()
+
+    consultations = get_all_consultations(patient_id)
     return success_response(consultations)
 
 
