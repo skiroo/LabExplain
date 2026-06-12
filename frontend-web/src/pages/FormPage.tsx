@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ChatBot from "../components/ChatBot";
+import ChatBot from "../components/Chatbot";
 import Header from "../components/Header";
 import { translate } from "../data/translations";
 import type { FontMode, Lang } from "../types/lang";

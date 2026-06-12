@@ -1,7 +1,7 @@
-// frontend-mobile/src/screens/HomeScreen.tsx
+// src/screens/HomeScreen.tsx
 
 import { useNavigation } from "@react-navigation/native";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 // Couleurs tirées du App.css web
 const C = {
@@ -16,13 +16,13 @@ const C = {
     heroBg: "#f7faff",
 };
 
-type HomeScreenProps = {
+type Props = {
     lang: string;
     user: any;
     onLangChange: (lang: string) => void;
 };
 
-export default function HomeScreen() {
+export default function HomeScreen(_props: Props) {
     const navigation = useNavigation<any>();
 
     return (
@@ -30,7 +30,14 @@ export default function HomeScreen() {
 
             {/* ===== HEADER ===== */}
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>LabExplain</Text>
+                <View style={styles.headerInner}>
+                    <Image
+                        source={require("../../assets/logo.png")}
+                        style={styles.logo}
+                        resizeMode="contain"
+                    />
+                    <Text style={styles.headerTitle}>LabExplain</Text>
+                </View>
                 <Text style={styles.headerTagline}>Préparez vos questions. Optimisez votre consultation.</Text>
             </View>
 
@@ -91,16 +98,16 @@ export default function HomeScreen() {
 
                 <View style={styles.mockContent}>
                     <View style={styles.mockBot}>
-                        <Text style={styles.mockBotText}>Bonjour ! Quel est le nom de votre medecin ?</Text>
+                        <Text style={styles.mockBotText}>Bonjour ! Quel est le nom de votre médecin ?</Text>
                     </View>
                     <View style={styles.mockUser}>
                         <Text style={styles.mockUserText}>Dr Martin</Text>
                     </View>
                     <View style={styles.mockBot}>
-                        <Text style={styles.mockBotText}>Comment evaluez-vous l'urgence de votre consultation ?</Text>
+                        <Text style={styles.mockBotText}>Comment évaluez-vous l'urgence de votre consultation ?</Text>
                     </View>
                     <View style={styles.mockOptionsRow}>
-                        {["Urgent", "Modere", "Routine"].map((opt) => (
+                        {["Urgent", "Modéré", "Routine"].map((opt) => (
                             <View key={opt} style={styles.mockOption}>
                                 <Text style={styles.mockOptionText}>{opt}</Text>
                             </View>
@@ -111,10 +118,10 @@ export default function HomeScreen() {
 
             {/* ===== AVERTISSEMENT MÉDICAL ===== */}
             <View style={styles.warningCard}>
-                <Text style={styles.warningTitle}>Cadre medical</Text>
+                <Text style={styles.warningTitle}>Cadre médical</Text>
                 <Text style={styles.warningText}>
-                    LabExplain ne pose aucun diagnostic et ne remplace pas un professionnel de sante. Il aide
-                    uniquement a mieux preparer la consultation.
+                    LabExplain ne pose aucun diagnostic et ne remplace pas un professionnel de santé. Il aide
+                    uniquement à mieux préparer la consultation.
                 </Text>
             </View>
 
@@ -136,22 +143,22 @@ export default function HomeScreen() {
             <View style={styles.sectionBlock}>
                 <Text style={styles.sectionKicker}>Pourquoi LabExplain ?</Text>
                 <Text style={styles.sectionTitle}>
-                    Une experience pensee pour les patients qui ont du mal a exprimer l'essentiel
+                    Une expérience pensée pour les patients qui ont du mal à exprimer l'essentiel
                 </Text>
                 <Text style={styles.sectionText}>
                     Le stress, la langue, la douleur ou certains troubles cognitifs peuvent rendre une
-                    consultation plus difficile. LabExplain prepare l'echange avant le rendez-vous.
+                    consultation plus difficile. LabExplain prépare l'échange avant le rendez-vous.
                 </Text>
 
                 <View style={styles.featureGrid}>
                     {[
                         {
-                            title: "Le probleme",
+                            title: "Le problème",
                             text: "De nombreux patients sortent d'une consultation sans avoir dit l'essentiel.",
                         },
                         {
                             title: "La solution",
-                            text: "Un assistant qui structure vos informations medicales en quelques minutes.",
+                            text: "Un assistant qui structure vos informations médicales en quelques minutes.",
                         },
                         {
                             title: "Notre approche",
@@ -168,11 +175,11 @@ export default function HomeScreen() {
 
             {/* ===== CTA FINAL ===== */}
             <View style={styles.finalCta}>
-                <Text style={styles.sectionKicker}>Pret a commencer ?</Text>
-                <Text style={styles.finalCtaTitle}>Preparez votre consultation autrement</Text>
+                <Text style={styles.sectionKicker}>Prêt à commencer ?</Text>
+                <Text style={styles.finalCtaTitle}>Préparez votre consultation autrement</Text>
                 <Text style={styles.sectionText}>
                     Une interface simple, moderne et inclusive pour mieux communiquer avec votre professionnel
-                    de sante.
+                    de santé.
                 </Text>
                 <TouchableOpacity
                     style={[styles.btnPrimary, { marginTop: 18 }]}
@@ -185,8 +192,8 @@ export default function HomeScreen() {
 
             {/* ===== FOOTER ===== */}
             <View style={styles.footer}>
-                <Text style={styles.footerText}>LabExplain — Projet academique EFREI 2026</Text>
-                <Text style={styles.footerMuted}>Ne constitue pas un avis medical</Text>
+                <Text style={styles.footerText}>LabExplain — Projet académique EFREI 2026</Text>
+                <Text style={styles.footerMuted}>Ne constitue pas un avis médical</Text>
             </View>
 
         </ScrollView>
@@ -210,11 +217,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         alignItems: "center",
     },
+    headerInner: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        marginBottom: 6,
+    },
+    logo: {
+        width: 36,
+        height: 36,
+    },
     headerTitle: {
         fontSize: 28,
         fontWeight: "800",
         color: C.white,
-        marginBottom: 6,
     },
     headerTagline: {
         fontSize: 13,

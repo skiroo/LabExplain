@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
-import { removeCurrentUser } from "../services/storage";
 import { apiDelete } from "../services/api";
 import { logoutUser } from "../services/auth";
 import type { FontMode, Lang } from "../types/lang";

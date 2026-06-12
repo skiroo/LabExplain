@@ -7,12 +7,55 @@ Description :
   - Médecin : profil, rendez-vous patients, comptes-rendus reçus
 */
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Header from "../components/Header";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
 import "./DashboardPage.css";
+
+// ── Icônes SVG — remplacent les emojis ──────────────────────────────────────
+
+function IconUser() {
+    return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>;
+}
+
+function IconClipboard() {
+    return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-3"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>;
+}
+
+function IconCalendar() {
+    return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
+}
+
+function IconFileText() {
+    return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>;
+}
+
+function IconStethoscope() {
+    return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><circle cx="18" cy="18" r="3"/><line x1="14.6" y1="15.5" x2="16" y2="16.9"/></svg>;
+}
+
+function IconPill() {
+    return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></svg>;
+}
+
+function IconAlertTriangle() {
+    return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
+}
+
+function IconMapPin() {
+    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>;
+}
+
+function IconEdit() {
+    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
+}
+
+function IconDownload() {
+    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
+}
+
 
 type DashboardPageProps = {
   lang: Lang;
@@ -271,10 +314,10 @@ function DashboardPage({
   // ── DASHBOARD MÉDECIN ────────────────────────────────────────────────────
 
   if (user.role === "medecin") {
-    const doctorTabs: { id: DoctorTabId; label: string; icon: string }[] = [
-      { id: "profil", label: "Mon profil", icon: "👤" },
-      { id: "rendezvous", label: "Rendez-vous", icon: "📅" },
-      { id: "compteRendus", label: "Comptes-rendus", icon: "📋" },
+    const doctorTabs: { id: DoctorTabId; label: string; icon: React.ReactNode }[] = [
+      { id: "profil", label: "Mon profil", icon: <IconUser /> },
+      { id: "rendezvous", label: "Rendez-vous", icon: <IconCalendar /> },
+      { id: "compteRendus", label: "Comptes-rendus", icon: <IconClipboard /> },
     ];
 
     const rdvAvenir = mockDoctorRendezVous.filter((r) => r.statut === "à venir");
@@ -387,7 +430,7 @@ function DashboardPage({
                             <span className="rdv-heure">{rdv.heure}</span>
                           </div>
                           <div className="rdv-info">
-                            <p className="rdv-doctor">👤 {rdv.patient}</p>
+                            <p className="rdv-doctor" style={{display:"flex",alignItems:"center",gap:"6px"}}><IconUser />{rdv.patient}</p>
                             <p className="rdv-specialite">Motif : {rdv.motif}</p>
                           </div>
                           <div className="rdv-cta-col">
@@ -415,7 +458,7 @@ function DashboardPage({
                             <span className="rdv-heure">{rdv.heure}</span>
                           </div>
                           <div className="rdv-info">
-                            <p className="rdv-doctor">👤 {rdv.patient}</p>
+                            <p className="rdv-doctor" style={{display:"flex",alignItems:"center",gap:"6px"}}><IconUser />{rdv.patient}</p>
                             <p className="rdv-specialite">Motif : {rdv.motif}</p>
                           </div>
                           <div className="rdv-cta-col">
@@ -445,7 +488,7 @@ function DashboardPage({
                       <div className="consultation-header">
                         <div className="consultation-meta">
                           <span className="consultation-date">{formatDate(cr.dateEnvoi)}</span>
-                          <span className="consultation-doctor">👤 {cr.patient}</span>
+                          <span className="consultation-doctor" style={{display:"inline-flex",alignItems:"center",gap:"6px"}}><IconUser />{cr.patient}</span>
                         </div>
                         <div className="consultation-actions">
                           <button
@@ -453,7 +496,7 @@ function DashboardPage({
                             className="rdv-prepare-btn"
                             onClick={() => handleDownloadPDF(cr.patient, cr.resume)}
                           >
-                            ⬇ PDF
+                            
                           </button>
                           <button
                             type="button"
@@ -519,9 +562,7 @@ function DashboardPage({
                                   type="button"
                                   className="btn-expand"
                                   style={{ marginTop: "0.5rem" }}
-                                  onClick={() => setEditingAnnotation(cr.id)}
-                                >
-                                  ✏️ {annotations[cr.id] ? "Modifier" : "Annoter"}
+                                  style={{display:"inline-flex",alignItems:"center",gap:"5px"}} onClick={() => setEditingAnnotation(cr.id)}><IconEdit />{annotations[cr.id] ? "Modifier" : "Annoter"}
                                 </button>
                               </>
                             )}
@@ -547,11 +588,11 @@ function DashboardPage({
 
   // ── DASHBOARD PATIENT ────────────────────────────────────────────────────
 
-  const tabs: { id: TabId; label: string; icon: string }[] = [
-    { id: "profil", label: "Mon profil", icon: "👤" },
-    { id: "consultations", label: "Consultations", icon: "📋" },
-    { id: "rendezvous", label: "Rendez-vous", icon: "📅" },
-    { id: "questionnaires", label: "Questionnaires", icon: "📝" },
+  const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
+    { id: "profil", label: "Mon profil", icon: <IconUser /> },
+    { id: "consultations", label: "Consultations", icon: <IconClipboard /> },
+    { id: "rendezvous", label: "Rendez-vous", icon: <IconCalendar /> },
+    { id: "questionnaires", label: "Questionnaires", icon: <IconFileText /> },
   ];
 
   const rdvAvenir = mockRendezVous.filter((r) => r.statut === "à venir");
@@ -659,7 +700,7 @@ function DashboardPage({
                   <h2 className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     Données biométriques
                     {!editBio ? (
-                      <button type="button" className="btn-expand" onClick={() => setEditBio(true)}>✏️ Modifier</button>
+                      <button type="button" className="btn-expand" style={{display:"inline-flex",alignItems:"center",gap:"5px"}} onClick={() => setEditBio(true)}><IconEdit />Modifier</button>
                     ) : (
                       <span style={{ display: "flex", gap: 8 }}>
                         <button type="button" className="sidebar-cta" style={{ padding: "5px 14px", fontSize: "0.82rem" }} onClick={() => setEditBio(false)}>Enregistrer</button>
@@ -715,7 +756,7 @@ function DashboardPage({
                   <h2 className="card-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     Dossier médical
                     {!editMedical ? (
-                      <button type="button" className="btn-expand" onClick={() => setEditMedical(true)}>✏️ Modifier</button>
+                      <button type="button" className="btn-expand" style={{display:"inline-flex",alignItems:"center",gap:"5px"}} onClick={() => setEditMedical(true)}><IconEdit />Modifier</button>
                     ) : (
                       <span style={{ display: "flex", gap: 8 }}>
                         <button type="button" className="sidebar-cta" style={{ padding: "5px 14px", fontSize: "0.82rem" }} onClick={() => setEditMedical(false)}>Enregistrer</button>
@@ -725,7 +766,7 @@ function DashboardPage({
                   </h2>
                   <div className="medical-fields">
                     <div className="medical-field">
-                      <span className="medical-field-label">🩺 Antécédents</span>
+                      <span className="medical-field-label" style={{display:"flex",alignItems:"center",gap:"6px"}}><IconStethoscope />Antécédents</span>
                       {editMedical ? (
                         <textarea value={medicalValues.antecedents} onChange={(e) => setMedicalValues((v) => ({ ...v, antecedents: e.target.value }))} rows={3} style={{ width: "100%", fontSize: "0.92rem", color: "var(--text)", border: "1px solid var(--primary)", borderRadius: 8, padding: "8px 10px", background: "var(--bg)", resize: "vertical", fontFamily: "inherit" }} />
                       ) : (
@@ -733,7 +774,7 @@ function DashboardPage({
                       )}
                     </div>
                     <div className="medical-field">
-                      <span className="medical-field-label">💊 Traitements en cours</span>
+                      <span className="medical-field-label" style={{display:"flex",alignItems:"center",gap:"6px"}}><IconPill />Traitements en cours</span>
                       {editMedical ? (
                         <textarea value={medicalValues.traitements} onChange={(e) => setMedicalValues((v) => ({ ...v, traitements: e.target.value }))} rows={3} style={{ width: "100%", fontSize: "0.92rem", color: "var(--text)", border: "1px solid var(--primary)", borderRadius: 8, padding: "8px 10px", background: "var(--bg)", resize: "vertical", fontFamily: "inherit" }} />
                       ) : (
@@ -741,7 +782,7 @@ function DashboardPage({
                       )}
                     </div>
                     <div className="medical-field">
-                      <span className="medical-field-label">⚠️ Allergies</span>
+                      <span className="medical-field-label" style={{display:"flex",alignItems:"center",gap:"6px"}}><IconAlertTriangle />Allergies</span>
                       {editMedical ? (
                         <textarea value={medicalValues.allergies} onChange={(e) => setMedicalValues((v) => ({ ...v, allergies: e.target.value }))} rows={3} style={{ width: "100%", fontSize: "0.92rem", color: "var(--text)", border: "1px solid var(--primary)", borderRadius: 8, padding: "8px 10px", background: "var(--bg)", resize: "vertical", fontFamily: "inherit" }} />
                       ) : (
@@ -824,7 +865,7 @@ function DashboardPage({
                         <div className="rdv-info">
                           <p className="rdv-doctor">{rdv.medecin}</p>
                           <p className="rdv-specialite">{rdv.specialite}</p>
-                          <p className="rdv-lieu">📍 {rdv.lieu}</p>
+                          <p className="rdv-lieu" style={{display:"flex",alignItems:"center",gap:"6px"}}><IconMapPin />{rdv.lieu}</p>
                         </div>
                         <div className="rdv-cta-col">
                           <Link to="/formulaire" className="rdv-prepare-btn">Préparer</Link>
@@ -850,7 +891,7 @@ function DashboardPage({
                         <div className="rdv-info">
                           <p className="rdv-doctor">{rdv.medecin}</p>
                           <p className="rdv-specialite">{rdv.specialite}</p>
-                          <p className="rdv-lieu">📍 {rdv.lieu}</p>
+                          <p className="rdv-lieu" style={{display:"flex",alignItems:"center",gap:"6px"}}><IconMapPin />{rdv.lieu}</p>
                         </div>
                         <div className="rdv-cta-col">
                           <span className="status-badge status-past">Passé</span>
