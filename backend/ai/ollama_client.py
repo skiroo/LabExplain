@@ -4,12 +4,7 @@ Dossier : backend/ai/
 Description :
     Client HTTP bas-niveau vers le service Ollama local.
     Ce module est le seul point de contact avec l'API Ollama.
-    Il gère :
-      - Les appels synchrones (send_prompt)
-      - Les appels en streaming SSE (stream_prompt)
-      - Le health check (ping)
-    Il lève des exceptions typées pour que les handlers métier
-    puissent les intercepter proprement.
+    Compatible Gemma 4 (modèle multimodal — API /api/chat standard).
 """
 
 import json
@@ -20,62 +15,61 @@ import requests
 
 from config import Config
 
-# Configuration du logger pour ce module
 logger = logging.getLogger("backend.ai.ollama_client")
 
 
-# ── Exceptions personnalisées ─────────────────────────────────────────────────
+# ── Exceptions ────────────────────────────────────────────────────────────────
 
 class OllamaUnavailableError(Exception):
-    """
-    Levée quand Ollama n'est pas joignable (service arrêté, réseau, timeout).
-    → Traduite en HTTP 503 par les routes Flask.
-    """
+    """Ollama non joignable — HTTP 503."""
 
 
 class OllamaModelError(Exception):
-    """
-    Levée quand Ollama répond mais retourne une erreur de modèle
-    (modèle inexistant, requête malformée, etc.).
-    → Traduite en HTTP 500 par les routes Flask.
-    """
+    """Ollama répond mais retourne une erreur de modèle — HTTP 500."""
 
 
-# ── Helpers internes ──────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _get_model() -> str:
-    """Retourne le nom du modèle configuré."""
     return Config.OLLAMA_MODEL
 
 
 def _build_messages(system: str, user: str) -> list:
-    """Construit la liste de messages au format Ollama Chat API."""
     return [
         {"role": "system", "content": system},
         {"role": "user",   "content": user},
     ]
 
 
+def _build_payload(messages: list, model: str, stream: bool) -> dict:
+    """
+    Construit le payload Ollama.
+    Gemma 4 supporte l'API /api/chat standard sans options spéciales.
+    On désactive num_ctx élevé pour éviter les OOM sur petites configs.
+    """
+    return {
+        "model":    model,
+        "messages": messages,
+        "stream":   stream,
+        "options": {
+            # Limite le contexte à 4096 tokens — suffisant pour les résumés médicaux
+            # et évite les erreurs mémoire sur les machines avec peu de VRAM
+            "num_ctx": 4096,
+        },
+    }
+
+
 # ── Appel synchrone ───────────────────────────────────────────────────────────
 
-def send_prompt(system: str = None, user: str = None, messages: list = None, model: str = None) -> str:
+def send_prompt(
+    system: str = None,
+    user: str = None,
+    messages: list = None,
+    model: str = None,
+) -> str:
     """
-    Envoie un prompt ou une liste de messages structurée à Ollama et attend la réponse complète.
-
-    Args:
-        system   : Prompt système (si messages n'est pas fourni).
-        user     : Message utilisateur (si messages n'est pas fourni).
-        messages : Liste de messages déjà structurés au format Chat API d'Ollama.
-                   Exemple : [{"role": "system", "content": "..."}, {"role": "user", ...}]
-        model    : Modèle à utiliser (par défaut : Config.OLLAMA_MODEL).
-
-    Returns:
-        Le texte généré par l'IA (chaîne brute).
-
-    Raises:
-        ValueError             : Si ni messages ni le couple system/user n'est fourni.
-        OllamaUnavailableError : Si Ollama n'est pas joignable.
-        OllamaModelError       : Si Ollama retourne une erreur.
+    Envoie un prompt à Ollama et attend la réponse complète.
+    Compatible avec Gemma 4 (gemma3:4b).
     """
     url = f"{Config.OLLAMA_BASE_URL}/api/chat"
 
@@ -83,77 +77,63 @@ def send_prompt(system: str = None, user: str = None, messages: list = None, mod
         chat_messages = messages
     else:
         if system is None or user is None:
-            logger.error("send_prompt appelé sans system/user et sans messages.")
-            raise ValueError("Vous devez fournir 'system' et 'user' ou passer une liste de 'messages'.")
+            raise ValueError("Fournir 'system' et 'user', ou une liste 'messages'.")
         chat_messages = _build_messages(system, user)
 
     selected_model = model or _get_model()
-    payload = {
-        "model": selected_model,
-        "messages": chat_messages,
-        "stream": False,
-    }
+    payload = _build_payload(chat_messages, selected_model, stream=False)
 
-    logger.info(f"Envoi d'une requête de chat synchrone à Ollama (Modèle: {selected_model})")
-    logger.debug(f"Payload de chat envoyé : {payload}")
+    logger.info(f"Appel Ollama synchrone — modèle : {selected_model}")
 
     try:
-        response = requests.post(
-            url,
-            json=payload,
-            timeout=Config.OLLAMA_TIMEOUT,
-        )
+        response = requests.post(url, json=payload, timeout=Config.OLLAMA_TIMEOUT)
     except requests.exceptions.ConnectionError as exc:
-        logger.error(f"Impossible de se connecter à Ollama sur {Config.OLLAMA_BASE_URL} : {str(exc)}")
         raise OllamaUnavailableError(
-            "Impossible de se connecter à Ollama. "
-            "Vérifiez qu'Ollama est bien lancé sur "
-            f"{Config.OLLAMA_BASE_URL}."
+            f"Ollama est introuvable sur {Config.OLLAMA_BASE_URL}. "
+            "Vérifiez qu'Ollama est lancé (ollama serve)."
         ) from exc
     except requests.exceptions.Timeout as exc:
-        logger.error(f"Timeout lors de l'appel Ollama après {Config.OLLAMA_TIMEOUT}s : {str(exc)}")
         raise OllamaUnavailableError(
-            f"Ollama n'a pas répondu dans les {Config.OLLAMA_TIMEOUT}s imparties."
+            f"Ollama n'a pas répondu en {Config.OLLAMA_TIMEOUT}s. "
+            "Gemma 4 est un gros modèle — augmentez OLLAMA_TIMEOUT si nécessaire."
         ) from exc
 
     if not response.ok:
-        logger.error(f"Erreur d'Ollama (HTTP {response.status_code}) : {response.text[:500]}")
+        error_text = response.text[:400]
+        logger.error(f"Erreur Ollama HTTP {response.status_code} : {error_text}")
+
+        # Message d'erreur lisible si le modèle n'existe pas
+        if "model" in error_text.lower() and "not found" in error_text.lower():
+            raise OllamaModelError(
+                f"Le modèle '{selected_model}' n'est pas installé. "
+                f"Lancez : ollama pull {selected_model}"
+            )
+
         raise OllamaModelError(
-            f"Ollama a retourné une erreur {response.status_code} : "
-            f"{response.text[:200]}"
+            f"Ollama a retourné HTTP {response.status_code} : {error_text}"
         )
 
     try:
-        data = response.json()
+        data    = response.json()
         content = data["message"]["content"]
-        logger.info("Réponse synchrone d'Ollama reçue avec succès.")
+        logger.info("Réponse Ollama reçue avec succès.")
         return content
     except (KeyError, ValueError) as exc:
-        logger.error(f"Format de réponse Ollama inattendu : {response.text[:500]}")
         raise OllamaModelError(
-            f"Réponse Ollama inattendue : {response.text[:200]}"
+            f"Format de réponse Ollama inattendu : {response.text[:200]}"
         ) from exc
 
 
-# ── Appel en streaming SSE ────────────────────────────────────────────────────
+# ── Appel streaming SSE ───────────────────────────────────────────────────────
 
-def stream_prompt(system: str = None, user: str = None, messages: list = None, model: str = None) -> Generator[str, None, None]:
+def stream_prompt(
+    system: str = None,
+    user: str = None,
+    messages: list = None,
+    model: str = None,
+) -> Generator[str, None, None]:
     """
-    Envoie un prompt ou une liste de messages structurée à Ollama et génère les chunks de texte au fur et à mesure.
-
-    Args:
-        system   : Prompt système (si messages n'est pas fourni).
-        user     : Message utilisateur (si messages n'est pas fourni).
-        messages : Liste de messages déjà structurés au format Chat API d'Ollama.
-        model    : Modèle à utiliser (par défaut : Config.OLLAMA_MODEL).
-
-    Yields:
-        Fragments de texte SSE au format "data: {\"token\": \"...\"}\n\n".
-
-    Raises:
-        ValueError             : Si ni messages ni le couple system/user n'est fourni.
-        OllamaUnavailableError : Si Ollama n'est pas joignable.
-        OllamaModelError       : Si Ollama retourne une erreur.
+    Envoie un prompt à Ollama et génère les tokens au fur et à mesure (SSE).
     """
     url = f"{Config.OLLAMA_BASE_URL}/api/chat"
 
@@ -161,61 +141,44 @@ def stream_prompt(system: str = None, user: str = None, messages: list = None, m
         chat_messages = messages
     else:
         if system is None or user is None:
-            logger.error("stream_prompt appelé sans system/user et sans messages.")
-            raise ValueError("Vous devez fournir 'system' et 'user' ou passer une liste de 'messages'.")
+            raise ValueError("Fournir 'system' et 'user', ou une liste 'messages'.")
         chat_messages = _build_messages(system, user)
 
     selected_model = model or _get_model()
-    payload = {
-        "model": selected_model,
-        "messages": chat_messages,
-        "stream": True,
-    }
+    payload = _build_payload(chat_messages, selected_model, stream=True)
 
-    logger.info(f"Début du streaming de chat avec Ollama (Modèle: {selected_model})")
-    logger.debug(f"Payload de streaming envoyé : {payload}")
+    logger.info(f"Appel Ollama streaming — modèle : {selected_model}")
 
     try:
         with requests.post(
-            url,
-            json=payload,
-            stream=True,
-            timeout=Config.OLLAMA_TIMEOUT,
+            url, json=payload, stream=True, timeout=Config.OLLAMA_TIMEOUT
         ) as response:
             if not response.ok:
-                logger.error(f"Erreur d'Ollama en streaming (HTTP {response.status_code}) : {response.text[:500]}")
                 raise OllamaModelError(
-                    f"Ollama a retourné une erreur {response.status_code} : "
-                    f"{response.text[:200]}"
+                    f"Ollama HTTP {response.status_code} : {response.text[:200]}"
                 )
 
             for raw_line in response.iter_lines():
                 if not raw_line:
                     continue
                 try:
-                    chunk_data = json.loads(raw_line)
-                    token = chunk_data.get("message", {}).get("content", "")
+                    chunk = json.loads(raw_line)
+                    token = chunk.get("message", {}).get("content", "")
                     if token:
-                        # Format SSE : "data: <payload>\n\n"
                         yield f"data: {json.dumps({'token': token})}\n\n"
-                    # Dernier chunk : Ollama envoie done=true
-                    if chunk_data.get("done"):
-                        logger.info("Streaming d'Ollama complété.")
+                    if chunk.get("done"):
+                        logger.info("Streaming Ollama terminé.")
                         yield "data: [DONE]\n\n"
-                except (json.JSONDecodeError, KeyError) as exc:
-                    logger.debug(f"Ligne de streaming ignorée ou invalide : {raw_line} (Erreur : {str(exc)})")
+                except (json.JSONDecodeError, KeyError):
                     continue
 
     except requests.exceptions.ConnectionError as exc:
-        logger.error(f"Connexion perdue avec Ollama pendant le streaming : {str(exc)}")
         raise OllamaUnavailableError(
-            "Impossible de se connecter à Ollama pour le streaming. "
-            f"Vérifiez qu'Ollama est bien lancé sur {Config.OLLAMA_BASE_URL}."
+            f"Ollama introuvable sur {Config.OLLAMA_BASE_URL}."
         ) from exc
     except requests.exceptions.Timeout as exc:
-        logger.error(f"Timeout rencontré lors du streaming Ollama : {str(exc)}")
         raise OllamaUnavailableError(
-            f"Ollama n'a pas répondu dans les {Config.OLLAMA_TIMEOUT}s imparties (streaming)."
+            f"Timeout Ollama ({Config.OLLAMA_TIMEOUT}s) en streaming."
         ) from exc
 
 
@@ -223,44 +186,41 @@ def stream_prompt(system: str = None, user: str = None, messages: list = None, m
 
 def ping() -> dict:
     """
-    Vérifie qu'Ollama est bien joignable et que le modèle configuré est disponible.
-
-    Returns:
-        dict avec les clés :
-          - "ollama" (bool) : True si le service répond.
-          - "model"  (str)  : Nom du modèle configuré.
-          - "models_available" (list) : Liste des modèles installés sur ce Ollama.
-
-    Raises:
-        OllamaUnavailableError : Si Ollama n'est pas joignable.
+    Vérifie qu'Ollama est joignable et que le modèle configuré est bien installé.
     """
     url = f"{Config.OLLAMA_BASE_URL}/api/tags"
-    logger.info(f"Health check : vérification d'Ollama sur {url}")
 
     try:
         response = requests.get(url, timeout=5)
     except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as exc:
-        logger.error(f"Ollama injoignable lors du health check : {str(exc)}")
         raise OllamaUnavailableError(
-            f"Ollama n'est pas joignable sur {Config.OLLAMA_BASE_URL}."
+            f"Ollama introuvable sur {Config.OLLAMA_BASE_URL}. "
+            "Lancez Ollama avec : ollama serve"
         ) from exc
 
     if not response.ok:
-        logger.error(f"Ollama répond avec une erreur lors du health check : HTTP {response.status_code}")
         raise OllamaUnavailableError(
-            f"Ollama a répondu avec le statut {response.status_code}."
+            f"Ollama a répondu avec HTTP {response.status_code}."
         )
 
     try:
-        data = response.json()
+        data   = response.json()
         models = [m["name"] for m in data.get("models", [])]
-        logger.info(f"Health check réussi. Modèle configuré : {_get_model()}. Modèles présents : {models}")
-    except (ValueError, KeyError) as exc:
-        logger.warning(f"Impossible de décoder la réponse de health check d'Ollama : {str(exc)}")
+    except (ValueError, KeyError):
         models = []
 
+    configured_model = _get_model()
+
+    # Avertit si le modèle configuré n'est pas dans la liste
+    if models and configured_model not in models:
+        logger.warning(
+            f"Le modèle '{configured_model}' n'est pas dans la liste Ollama : {models}. "
+            f"Lancez : ollama pull {configured_model}"
+        )
+
     return {
-        "ollama": True,
-        "model": _get_model(),
-        "models_available": models,
+        "ollama":            True,
+        "model":             configured_model,
+        "model_installed":   configured_model in models,
+        "models_available":  models,
     }
