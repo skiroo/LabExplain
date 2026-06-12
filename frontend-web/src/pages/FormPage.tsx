@@ -139,10 +139,6 @@ function FormPage({ lang, font, user, onLangChange, onFontChange, onUserChange }
           </section>
         </section>
       </main>
-
-      <footer>
-        <p>© LabExplain 2025-2026</p>
-      </footer>
     </>
   );
 }

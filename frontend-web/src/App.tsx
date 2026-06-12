@@ -19,6 +19,7 @@ import {
 } from "./services/storage";
 import type { FontMode, Lang } from "./types/lang";
 import type { User } from "./types/user";
+import Footer from "./components/Footer";
 
 type PageProps = {
     lang: Lang;
@@ -100,6 +101,7 @@ function App() {
                 {/* 404 */}
                 <Route path="*" element={<NotFoundPage {...pageProps} />} />
             </Routes>
+            <Footer lang={lang} />
         </BrowserRouter>
     );
 }

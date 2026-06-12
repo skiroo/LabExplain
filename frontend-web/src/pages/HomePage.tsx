@@ -46,9 +46,11 @@ function HomePage({ lang, font, user, onLangChange, onFontChange, onUserChange }
               <button className="button primary big-btn" type="button" onClick={start}>
                 {translate(lang, "startNow")}
               </button>
-              <Link className="button secondary big-btn" to="/connexion">
-                {translate(lang, "login")}
-              </Link>
+              {!user && (
+                <Link className="button secondary big-btn" to="/connexion">
+                  {translate(lang, "login")}
+                </Link>
+              )}
             </div>
 
             <div className="hero-trust-row">
@@ -148,17 +150,15 @@ function HomePage({ lang, font, user, onLangChange, onFontChange, onUserChange }
               <button className="button primary big-btn" type="button" onClick={start}>
                 {translate(lang, "startNow")}
               </button>
-              <Link className="button secondary big-btn" to="/connexion">
-                {translate(lang, "login")}
-              </Link>
+              {!user && (
+                <Link className="button secondary big-btn" to="/connexion">
+                  {translate(lang, "login")}
+                </Link>
+              )}
             </div>
           </div>
         </section>
       </main>
-
-      <footer>
-        <p>© LabExplain 2025-2026</p>
-      </footer>
     </>
   );
 }
