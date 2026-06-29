@@ -123,11 +123,11 @@ def reset(cursor):
     cursor.execute(
         """
         DELETE FROM Specialite
-        WHERE code_ameli = 'SM26'
+        WHERE code_sm = 'SM26'
           AND NOT EXISTS (
               SELECT 1 FROM Medecin m
               JOIN Specialite s ON s.id_specialite = m.id_specialite
-              WHERE s.code_ameli = 'SM26'
+              WHERE s.code_sm = 'SM26'
           )
         """
     )
@@ -144,12 +144,12 @@ def seed(cursor, now: datetime):
     print("  Insertion de la spécialité...")
     cursor.execute(
         """
-        INSERT INTO Specialite (code_ameli, libelle)
+        INSERT INTO Specialite (code_sm, libelle)
         VALUES ('SM26', 'Médecin généraliste')
         ON DUPLICATE KEY UPDATE libelle = libelle
         """
     )
-    cursor.execute("SELECT id_specialite FROM Specialite WHERE code_ameli = 'SM26'")
+    cursor.execute("SELECT id_specialite FROM Specialite WHERE code_sm = 'SM26'")
     id_specialite = cursor.fetchone()[0]
 
     # ── Compte patient ────────────────────────────────────────────────────────

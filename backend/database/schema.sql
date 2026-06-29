@@ -2,7 +2,7 @@
 -- Fichier : schema.sql
 -- Dossier : backend/database/
 -- Description :
---     Schéma LabExplain v3 — RGPD Option B
+--     Schéma LabExplain
 --
 --     Principes de conception :
 --       - 1NF : valeurs atomiques, pas de groupes répétitifs
@@ -13,18 +13,6 @@
 --       - ps-libreacces-personne-activite.txt (ANS) → MedecinAnnuaire, Specialite, CabinetMedecin
 --       - extraction-correspondance-mssante.txt (ANS) → MedecinAnnuaire.email_mssante
 --
---     Clé naturelle RPPS :
---       MedecinAnnuaire utilise le numéro RPPS (Identifiant PP ANS, 11 chiffres)
---       comme clé primaire naturelle. C'est l'identifiant officiel unique et
---       pérenne de tout professionnel de santé en France — pas de clé surrogate.
---       Medecin.rpps_saisi pointe vers cette même clé une fois vérifié.
---
---     Vérification RPPS :
---       1. Le médecin saisit son RPPS à l'inscription (Medecin.rpps_saisi)
---       2. Le backend cherche MedecinAnnuaire WHERE rpps = rpps_saisi
---       3. Si trouvé, un code est envoyé à email_mssante
---       4. Confirmation → rpps_verifie = TRUE, rpps_annuaire = rpps_saisi
---       5. rpps_token et rpps_token_expiration sont effacés
 -- ============================================================
 
 USE defaultdb;
@@ -197,11 +185,16 @@ CREATE TABLE IF NOT EXISTS CabinetMedecin (
     code_postal     VARCHAR(10)     DEFAULT NULL,
     ville           VARCHAR(100)    DEFAULT NULL,
     telephone       VARCHAR(20)     DEFAULT NULL,
+    -- Coordonnées GPS pour la carte interactive du choix de médecin.
+    -- NULL jusqu'au passage du script de géocodage (backend/database/geocode_cabinets.py).
+    latitude        DECIMAL(9,6)    DEFAULT NULL,
+    longitude       DECIMAL(9,6)    DEFAULT NULL,
     rpps            CHAR(11)        NOT NULL,
     PRIMARY KEY (id_cabinet),
     INDEX idx_code_postal   (code_postal),
     INDEX idx_ville         (ville),
     INDEX idx_rpps          (rpps),
+    INDEX idx_coords        (latitude, longitude),
     CONSTRAINT fk_cabinet_annuaire
         FOREIGN KEY (rpps) REFERENCES MedecinAnnuaire(rpps)
         ON DELETE CASCADE ON UPDATE CASCADE
@@ -250,12 +243,64 @@ CREATE TABLE IF NOT EXISTS Medecin (
 
 
 -- ============================================================
+-- TABLE : RendezVous
+-- Rôle  : Déclaration par le patient d'un rendez-vous médical à venir.
+--         Volontairement déclaratif et non transactionnel : le patient
+--         indique lui-même la date, l'heure et le médecin (choisi sur
+--         la carte des cabinets via MedecinAnnuaire), sans validation
+--         ni notification du médecin. Cela évite tout spam vers des
+--         médecins qui n'ont pas le temps de gérer un agenda numérique,
+--         et respecte le principe RGPD de minimisation : aucune donnée
+--         n'est transmise au médecin sans action explicite du patient
+--         (export/partage du document de préparation, en dehors de
+--         ce système).
+--         rpps_medecin référence MedecinAnnuaire et non Medecin.id_medecin,
+--         car le médecin choisi par le patient n'a généralement pas de
+--         compte LabExplain (c'est un médecin de l'annuaire ANS).
+-- ============================================================
+CREATE TABLE IF NOT EXISTS RendezVous (
+    id_rendezvous   INT             NOT NULL AUTO_INCREMENT,
+    date_heure      DATETIME        NOT NULL,
+    -- Nom/spécialité dupliqués en clair au moment de la création :
+    -- le patient doit pouvoir consulter son rendez-vous même si la
+    -- ligne MedecinAnnuaire correspondante disparaît un jour (mise à
+    -- jour de l'annuaire ANS). Cohérent avec le choix déjà fait pour
+    -- Consultation (données non sensibles conservées en clair).
+    medecin_nom         VARCHAR(100)    NOT NULL,
+    medecin_prenom      VARCHAR(100)    NOT NULL,
+    medecin_specialite  VARCHAR(150)    DEFAULT NULL,
+    lieu                VARCHAR(255)    DEFAULT NULL,
+    statut          ENUM('a_venir', 'passe', 'annule') NOT NULL DEFAULT 'a_venir',
+    rpps_medecin    CHAR(11)        DEFAULT NULL,
+    id_cabinet      INT             DEFAULT NULL,
+    id_patient      INT             NOT NULL,
+    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_rendezvous),
+    INDEX idx_patient       (id_patient),
+    INDEX idx_date_heure    (date_heure),
+    INDEX idx_statut        (statut),
+    CONSTRAINT fk_rendezvous_patient
+        FOREIGN KEY (id_patient) REFERENCES Patient(id_patient)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_rendezvous_annuaire
+        FOREIGN KEY (rpps_medecin) REFERENCES MedecinAnnuaire(rpps)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_rendezvous_cabinet
+        FOREIGN KEY (id_cabinet) REFERENCES CabinetMedecin(id_cabinet)
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- ============================================================
 -- TABLE : Consultation
 -- Rôle  : Séance de préparation patient ↔ médecin.
 --         Données du chatbot conservées en clair (non médicalement
 --         sensibles au sens strict — pas de diagnostics).
 --         Données chiffrées → QuestionnairePreparation, SyntheseIA.
 --         statut en ENUM pour garantir la cohérence (1NF).
+--         id_rendezvous : lien optionnel vers le rendez-vous que cette
+--         consultation prépare. NULL si la préparation est faite sans
+--         rendez-vous déclaré au préalable.
 -- ============================================================
 CREATE TABLE IF NOT EXISTS Consultation (
     id_consultation         INT             NOT NULL AUTO_INCREMENT,
@@ -269,16 +314,21 @@ CREATE TABLE IF NOT EXISTS Consultation (
     notes_complementaires   TEXT            DEFAULT NULL,
     id_medecin              INT             DEFAULT NULL,
     id_patient              INT             NOT NULL,
+    id_rendezvous           INT             DEFAULT NULL,
     PRIMARY KEY (id_consultation),
-    INDEX idx_patient   (id_patient),
-    INDEX idx_medecin   (id_medecin),
-    INDEX idx_statut    (statut),
+    INDEX idx_patient       (id_patient),
+    INDEX idx_medecin       (id_medecin),
+    INDEX idx_statut        (statut),
+    INDEX idx_rendezvous    (id_rendezvous),
     CONSTRAINT fk_consultation_medecin
         FOREIGN KEY (id_medecin) REFERENCES Medecin(id_medecin)
         ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT fk_consultation_patient
         FOREIGN KEY (id_patient) REFERENCES Patient(id_patient)
         ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_consultation_rendezvous
+        FOREIGN KEY (id_rendezvous) REFERENCES RendezVous(id_rendezvous)
+        ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT chk_niveau_douleur
         CHECK (niveau_douleur IS NULL OR niveau_douleur BETWEEN 0 AND 10)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
