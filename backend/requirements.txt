@@ -6,3 +6,4 @@ requests
 bcrypt
 cryptography
 dnspython
+reportlab

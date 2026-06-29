@@ -106,13 +106,28 @@ def register_user(data: dict):
             )
 
         else:
-            specialite = data.get("specialite") or None
+            # La spécialité officielle vient de l'annuaire ANS (MedecinAnnuaire/Specialite),
+            # pas d'une saisie libre. Tant que le RPPS n'est pas vérifié, id_specialite
+            # reste NULL — on essaie juste de résoudre un libellé saisi pour ne pas le perdre.
+            specialite_libelle = (data.get("specialite") or "").strip()
+            id_specialite = None
+            if specialite_libelle:
+                cursor.execute(
+                    "SELECT id_specialite FROM Specialite WHERE libelle = %s",
+                    (specialite_libelle,)
+                )
+                row_specialite = cursor.fetchone()
+                if row_specialite:
+                    id_specialite = row_specialite["id_specialite"]
+
+            rpps_saisi = (data.get("rpps") or "").strip() or None
+
             cursor.execute(
                 """
-                INSERT INTO Medecin (nom, prenom, specialite, id_compte)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO Medecin (nom, prenom, id_specialite, rpps_saisi, id_compte)
+                VALUES (%s, %s, %s, %s, %s)
                 """,
-                (nom, prenom, specialite, id_compte)
+                (nom, prenom, id_specialite, rpps_saisi, id_compte)
             )
 
         mysql.connection.commit()
@@ -363,16 +378,23 @@ def _build_user_profile(cursor, compte: dict) -> dict:
 
     elif role == "medecin":
         cursor.execute(
-            "SELECT * FROM Medecin WHERE id_compte = %s",
+            """
+            SELECT m.*, s.libelle AS specialite
+            FROM Medecin m
+            LEFT JOIN Specialite s ON s.id_specialite = m.id_specialite
+            WHERE m.id_compte = %s
+            """,
             (id_compte,)
         )
         medecin = cursor.fetchone()
 
         if medecin:
-            user["id_medecin"] = medecin["id_medecin"]
-            user["nom"]        = medecin["nom"]
-            user["prenom"]     = medecin["prenom"]
-            user["specialite"] = medecin["specialite"]
+            user["id_medecin"]   = medecin["id_medecin"]
+            user["nom"]          = medecin["nom"]
+            user["prenom"]       = medecin["prenom"]
+            user["specialite"]   = medecin["specialite"]
+            user["rpps_saisi"]   = medecin["rpps_saisi"]
+            user["rpps_verifie"] = bool(medecin["rpps_verifie"])
 
     return user
 

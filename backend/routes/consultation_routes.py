@@ -3,7 +3,9 @@ Fichier : consultation_routes.py
 Dossier : backend/routes/
 Description :
     Définit les routes liées aux consultations.
-    Le patient_id est extrait du header X-User-Id (en attendant JWT).
+    Le compte_id (id_compte) est extrait du header X-User-Id (en attendant JWT).
+    Le service consultation_service se charge de résoudre l'id_patient
+    correspondant, Compte et Patient étant deux tables distinctes.
 """
 
 from flask import Blueprint, request
@@ -20,7 +22,7 @@ consultation_bp = Blueprint("consultations", __name__)
 
 def get_user_id_from_request():
     """
-    Récupère l'identifiant utilisateur depuis le header X-User-Id.
+    Récupère l'identifiant de compte (id_compte) depuis le header X-User-Id.
     À remplacer plus tard par un vrai décodage de token JWT.
     """
     return request.headers.get("X-User-Id")
@@ -31,14 +33,14 @@ def create():
     """
     Crée une nouvelle consultation liée au patient connecté.
     """
-    patient_id = get_user_id_from_request()
+    compte_id = get_user_id_from_request()
 
-    if not patient_id:
+    if not compte_id:
         return error_response("Utilisateur non identifié", 401)
 
     data = request.get_json()
 
-    consultation, error = create_consultation(data, patient_id)
+    consultation, error = create_consultation(data, compte_id)
 
     if error:
         return error_response(error, 400)
@@ -52,9 +54,9 @@ def get_consultations():
     Retourne les consultations.
     Si le header X-User-Id est présent, retourne uniquement celles du patient connecté.
     """
-    patient_id = get_user_id_from_request()
+    compte_id = get_user_id_from_request()
 
-    consultations = get_all_consultations(patient_id)
+    consultations = get_all_consultations(compte_id)
     return success_response(consultations)
 
 

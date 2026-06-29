@@ -25,10 +25,12 @@ from ai import (
     generate_summary,
     stream_summary,
     chat_turn,
+    interview_turn,
     translate_summary,
     ollama_ping,
 )
 from ai.ollama_client import OllamaUnavailableError, OllamaModelError
+from ai.pdf_export import build_summary_pdf
 from utils.response import success_response, error_response
 
 # Configuration du logger pour le module des routes IA
@@ -199,6 +201,58 @@ def chat():
     return success_response({"response": response_text}, "Réponse générée avec succès")
 
 
+# ── POST /api/ai/interview ────────────────────────────────────────────────────
+
+@ai_bp.route("/interview", methods=["POST"])
+@_handle_ollama_errors
+def interview():
+    """
+    Effectue un tour de l'entretien dynamique de préparation de consultation.
+    L'IA choisit la prochaine question à poser en fonction des réponses
+    précédentes du patient, jusqu'à avoir recueilli assez d'informations
+    (status passe alors à "done" avec collectedData prêt pour /api/ai/summary).
+
+    Body JSON attendu :
+    {
+        "history" : [
+            {"role": "assistant", "content": {...dernier tour structuré...}},
+            {"role": "user", "content": "réponse libre du patient"}
+        ],
+        "doctorName" : str (optionnel, nom du médecin sélectionné)
+    }
+    Pour le premier appel, "history" peut être une liste vide ou absente.
+
+    Response :
+    {
+        "success": true,
+        "data": {
+            "status"        : "question" | "done",
+            "question"      : str,
+            "options"       : [str],
+            "redFlags"      : [str],
+            "collectedData" : {
+                "symptoms": str, "medicalHistory": str,
+                "currentTreatments": str, "painLevel": int|None,
+                "additionalNotes": str
+            }
+        }
+    }
+    """
+    data = request.get_json()
+
+    if data is None:
+        return error_response("Aucune donnée envoyée", 400)
+
+    history = data.get("history", [])
+    doctor_name = data.get("doctorName", "")
+
+    if not isinstance(history, list):
+        return error_response("Le champ 'history' doit être une liste", 400)
+
+    result = interview_turn(history, doctor_name)
+    return success_response(result, "Tour d'entretien généré avec succès")
+
+
 # ── POST /api/ai/translate ────────────────────────────────────────────────────
 
 @ai_bp.route("/translate", methods=["POST"])
@@ -238,6 +292,53 @@ def translate():
 
     translated = translate_summary(summary_data, target_language)
     return success_response(translated, f"Résumé traduit en '{target_language}' avec succès")
+
+
+# ── POST /api/ai/summary/pdf ──────────────────────────────────────────────────
+
+@ai_bp.route("/summary/pdf", methods=["POST"])
+def summary_pdf():
+    """
+    Génère et retourne en téléchargement le PDF de synthèse de consultation
+    à partir d'un résumé déjà généré (par /api/ai/summary).
+
+    Body JSON attendu :
+    {
+        "summary_data" : dict (résumé avec summary, questions, warning, redFlags),
+        "patientName"  : str (optionnel),
+        "doctorName"   : str (optionnel)
+    }
+
+    Response : application/pdf (téléchargement direct)
+    """
+    data = request.get_json()
+
+    if data is None:
+        return error_response("Aucune donnée envoyée", 400)
+
+    summary_data = data.get("summary_data")
+    if not summary_data or not isinstance(summary_data, dict):
+        return error_response("Le champ 'summary_data' est obligatoire et doit être un objet", 400)
+
+    if not summary_data.get("summary"):
+        return error_response("Le résumé ne contient pas de champ 'summary'", 400)
+
+    patient_name = data.get("patientName", "")
+    doctor_name = data.get("doctorName", "")
+
+    try:
+        pdf_bytes = build_summary_pdf(summary_data, patient_name, doctor_name)
+    except Exception as exc:
+        logger.error(f"Erreur lors de la génération du PDF de synthèse : {str(exc)}")
+        return error_response("Erreur lors de la génération du PDF", 500)
+
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={
+            "Content-Disposition": "attachment; filename=synthese-labexplain.pdf",
+        },
+    )
 
 
 # ── GET /api/ai/health ────────────────────────────────────────────────────────

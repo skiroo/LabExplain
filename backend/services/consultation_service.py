@@ -9,10 +9,25 @@ Description :
 from database.db import mysql
 
 
-def create_consultation(data, patient_id):
+def _resolve_patient_id(cursor, compte_id):
+    """
+    Résout l'id_patient à partir de l'id_compte connecté.
+    Le header X-User-Id transporte un id_compte (pas un id_patient) :
+    Compte et Patient sont deux tables distinctes (séparation RGPD).
+    Retourne l'id_patient ou None si introuvable.
+    """
+    cursor.execute(
+        "SELECT id_patient FROM Patient WHERE id_compte = %s",
+        (compte_id,)
+    )
+    row = cursor.fetchone()
+    return row["id_patient"] if row else None
+
+
+def create_consultation(data, compte_id):
     """
     Crée une nouvelle consultation en base de données.
-    patient_id est l'identifiant du patient connecté (extrait du token).
+    compte_id est l'id_compte du patient connecté (extrait du header X-User-Id).
     """
     doctor_id = data.get("doctorId")
     language = data.get("language", "fr")
@@ -28,6 +43,10 @@ def create_consultation(data, patient_id):
     cursor = mysql.connection.cursor()
 
     try:
+        patient_id = _resolve_patient_id(cursor, compte_id)
+        if not patient_id:
+            return None, "Patient introuvable pour ce compte"
+
         cursor.execute(
             """
             INSERT INTO Consultation (
@@ -74,24 +93,30 @@ def create_consultation(data, patient_id):
         cursor.close()
 
 
-def get_all_consultations(patient_id=None):
+def get_all_consultations(compte_id=None):
     """
     Retourne toutes les consultations.
-    Si patient_id est fourni, retourne uniquement les consultations de ce patient.
+    Si compte_id est fourni, retourne uniquement les consultations
+    du patient lié à ce compte.
     """
     cursor = mysql.connection.cursor()
 
     try:
-        if patient_id:
+        if compte_id:
+            patient_id = _resolve_patient_id(cursor, compte_id)
+            if not patient_id:
+                return []
+
             cursor.execute(
                 """
                 SELECT
                     c.*,
                     m.nom AS medecin_nom,
                     m.prenom AS medecin_prenom,
-                    m.specialite AS medecin_specialite
+                    s.libelle AS medecin_specialite
                 FROM Consultation c
                 LEFT JOIN Medecin m ON c.id_medecin = m.id_medecin
+                LEFT JOIN Specialite s ON s.id_specialite = m.id_specialite
                 WHERE c.id_patient = %s
                 ORDER BY c.date_heure DESC
                 """,
@@ -104,9 +129,10 @@ def get_all_consultations(patient_id=None):
                     c.*,
                     m.nom AS medecin_nom,
                     m.prenom AS medecin_prenom,
-                    m.specialite AS medecin_specialite
+                    s.libelle AS medecin_specialite
                 FROM Consultation c
                 LEFT JOIN Medecin m ON c.id_medecin = m.id_medecin
+                LEFT JOIN Specialite s ON s.id_specialite = m.id_specialite
                 ORDER BY c.date_heure DESC
                 """
             )
@@ -134,9 +160,10 @@ def get_consultation_by_id(consultation_id):
                 c.*,
                 m.nom AS medecin_nom,
                 m.prenom AS medecin_prenom,
-                m.specialite AS medecin_specialite
+                s.libelle AS medecin_specialite
             FROM Consultation c
             LEFT JOIN Medecin m ON c.id_medecin = m.id_medecin
+            LEFT JOIN Specialite s ON s.id_specialite = m.id_specialite
             WHERE c.id_consultation = %s
             """,
             (consultation_id,)

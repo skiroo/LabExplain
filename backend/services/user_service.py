@@ -51,10 +51,11 @@ def get_user_profile(compte_id: int):
             SELECT c.id_compte, c.email, c.role, c.email_verifie,
                    c.consent, c.consent_date, c.created_at,
                    p.id_patient, p.nom, p.prenom, p.date_naissance, p.gender,
-                   m.id_medecin, m.specialite
+                   m.id_medecin, m.rpps_saisi, m.rpps_verifie, s.libelle AS specialite
             FROM Compte c
             LEFT JOIN Patient p ON p.id_compte = c.id_compte
             LEFT JOIN Medecin m ON m.id_compte = c.id_compte
+            LEFT JOIN Specialite s ON s.id_specialite = m.id_specialite
             WHERE c.id_compte = %s
             """,
             (compte_id,)
@@ -246,16 +247,16 @@ def update_password(compte_id: int, current_password: str, new_password: str):
 
 def delete_user_profile(compte_id: int):
     """
-    Supprime le compte et toutes ses données (CASCADE sur Patient → DonneesPatient).
+    Supprime le compte et toutes ses données.
+    Utilise la procédure stockée sp_supprimer_compte qui anonymise
+    d'abord l'identité et les données médicales avant de supprimer
+    le compte, conformément au flux RGPD défini dans le schéma.
     """
     cursor = mysql.connection.cursor()
     try:
-        cursor.execute(
-            "DELETE FROM Compte WHERE id_compte = %s",
-            (compte_id,)
-        )
+        cursor.execute("CALL sp_supprimer_compte(%s)", (compte_id,))
         mysql.connection.commit()
-        return cursor.rowcount > 0
+        return True
     except Exception:
         mysql.connection.rollback()
         return False

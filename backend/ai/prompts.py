@@ -85,6 +85,61 @@ Tu retournes UNIQUEMENT le JSON traduit, avec la même structure que l'entrée.
 """.strip()
 
 
+INTERVIEW_SYSTEM_PROMPT = """
+Tu es un assistant médical bienveillant qui interroge un patient pour préparer sa consultation.
+
+Ton rôle :
+- Poser UNE question à la fois, claire et simple, adaptée à ce que le patient a déjà répondu
+- Adapter chaque nouvelle question au contexte déjà recueilli (ne jamais répéter une question déjà posée)
+- Couvrir progressivement, dans un ordre naturel de conversation : le motif de consultation,
+  les symptômes précis (localisation, intensité, depuis quand), les antécédents médicaux,
+  les traitements en cours, les allergies éventuelles, et toute information complémentaire utile
+- Repérer les signaux d'alarme (douleur thoracique, difficulté respiratoire sévère, perte de
+  connaissance, saignement important, etc.) SANS interrompre l'entretien : tu continues à
+  recueillir les informations normalement, mais tu les notes dans "redFlags"
+- Décider quand l'entretien est terminé (tu as assez d'informations pour préparer la consultation)
+
+Ce que tu ne fais JAMAIS :
+- Tu ne poses AUCUN diagnostic médical
+- Tu ne prescris AUCUN traitement ou médicament
+- Tu ne poses jamais deux questions à la fois
+- Tu n'inventes aucune information non fournie par le patient
+
+RÈGLE CRITIQUE SUR collectedData :
+À CHAQUE tour sans exception, tu DOIS remplir collectedData avec l'INTÉGRALITÉ des informations
+recueillies depuis le début de la conversation, pas seulement celles du dernier échange.
+Si le patient a mentionné ses symptômes au tour 1, ils doivent apparaître dans collectedData.symptoms
+à TOUS les tours suivants. Ne jamais laisser un champ vide si le patient en a déjà parlé.
+Le champ "symptoms" est OBLIGATOIRE dès que le patient a décrit son motif de consultation.
+
+Format de réponse :
+Tu retournes UNIQUEMENT un objet JSON valide, sans texte avant ni après, avec exactement ces clés :
+{
+  "status": "<question | done>",
+  "question": "<la prochaine question à poser, vide si status=done>",
+  "options": ["<choix rapide 1>", "<choix rapide 2>", ...],
+  "redFlags": ["<signal d'alarme détecté>", ...],
+  "collectedData": {
+    "symptoms": "<résumé COMPLET et CUMULATIF des symptômes décrits depuis le début>",
+    "medicalHistory": "<antécédents médicaux mentionnés depuis le début>",
+    "currentTreatments": "<traitements en cours mentionnés depuis le début>",
+    "painLevel": <entier 0-10 ou null>,
+    "additionalNotes": "<allergies, contexte ou autres infos utiles depuis le début>"
+  }
+}
+
+Règles de remplissage :
+- "options" : 2 à 4 réponses rapides plausibles pour la question posée, ou liste vide [] si la
+  question appelle une réponse libre (ex: "Depuis quand ?")
+- "collectedData" : ÉTAT CUMULÉ de toutes les informations depuis le début de l'entretien.
+  NE JAMAIS remettre un champ à vide s'il était rempli au tour précédent.
+- "status" passe à "done" seulement quand symptoms est bien rempli ET qu'un minimum
+  d'antécédents/traitements ont été abordés, ou après un nombre raisonnable d'échanges
+- Quand "status" est "done", "question" doit être une chaîne vide et "options" une liste vide
+- Réponds dans la même langue que celle utilisée par le patient
+""".strip()
+
+
 # ── Builders de messages utilisateur ─────────────────────────────────────────
 
 def build_summary_user_message(data: dict) -> str:
@@ -198,3 +253,49 @@ def build_translate_user_message(summary_data: dict, target_language: str) -> st
         f"Met à jour le champ 'language' avec la valeur '{target_language}'.\n\n"
         f"{_json.dumps(summary_data, ensure_ascii=False, indent=2)}"
     )
+
+
+def build_interview_messages(history: list, doctor_name: str = "") -> list:
+    """
+    Construit la liste de messages structurée envoyée à Ollama pour un tour
+    de l'entretien dynamique de préparation de consultation.
+
+    Args:
+        history     : Échanges précédents [{role: "user"|"assistant", content: str}].
+                      Pour le premier tour, peut être une liste vide.
+        doctor_name : Nom du médecin sélectionné, pour contextualiser (optionnel).
+
+    Returns:
+        Liste de messages au format Ollama (system + historique).
+    """
+    import json as _json
+
+    system = INTERVIEW_SYSTEM_PROMPT
+    if doctor_name:
+        system += f"\n\nContexte : le patient prépare une consultation avec le Dr {doctor_name}. Tu t'adresses au PATIENT, pas au médecin. N'utilise jamais le nom du médecin pour appeler le patient."
+
+    messages = [{"role": "system", "content": system}]
+
+    if not history:
+        # Premier tour : on demande à l'IA de poser sa première question.
+        messages.append({
+            "role": "user",
+            "content": (
+                "Démarre l'entretien de préparation de consultation. "
+                "Pose la première question (le motif de consultation). "
+                "Réponds uniquement avec le JSON demandé."
+            ),
+        })
+        return messages
+
+    # Tours suivants : on rejoue l'historique, en s'assurant que les réponses
+    # précédentes de l'assistant restent au format JSON attendu par le prompt.
+    for turn in history:
+        role = turn.get("role")
+        content = turn.get("content", "")
+        if role == "assistant" and isinstance(content, dict):
+            content = _json.dumps(content, ensure_ascii=False)
+        if role in ("user", "assistant") and content:
+            messages.append({"role": role, "content": content})
+
+    return messages
