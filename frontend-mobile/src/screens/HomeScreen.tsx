@@ -192,7 +192,7 @@ export default function HomeScreen(_props: Props) {
 
             {/* ===== FOOTER ===== */}
             <View style={styles.footer}>
-                <Text style={styles.footerText}>LabExplain — Projet académique EFREI 2026</Text>
+                <Text style={styles.footerText}>LabExplain - Projet académique EFREI 2026</Text>
                 <Text style={styles.footerMuted}>Ne constitue pas un avis médical</Text>
             </View>
 
