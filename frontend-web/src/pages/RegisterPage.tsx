@@ -3,8 +3,8 @@ Fichier : RegisterPage.tsx
 Dossier : src/pages/
 Description :
   Page d'inscription en deux étapes :
-  Étape 1 — Vérification de l'email (format + domaine MX + unicité)
-  Étape 2 — Reste du formulaire avec validation mot de passe en temps réel
+  Étape 1 - Vérification de l'email (format + domaine MX + unicité)
+  Étape 2 - Reste du formulaire avec validation mot de passe en temps réel
 */
 
 import { useState, useRef } from "react";
@@ -26,7 +26,7 @@ type Props = {
     onUserChange: () => void;
 };
 
-// Règles de validation du mot de passe — miroir exact de validators.py
+// Règles de validation du mot de passe - miroir exact de validators.py
 const PWD_RULES = [
     { id: "length",    label: "8 caractères minimum",          test: (p: string) => p.length >= 8 },
     { id: "upper",     label: "Une majuscule",                 test: (p: string) => /[A-Z]/.test(p) },
@@ -57,12 +57,12 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
     const [step, setStep]           = useState<"email" | "form" | "success">("email");
     const [validatedEmail, setValidatedEmail] = useState("");
 
-    // Étape 1 — email
+    // Étape 1 - email
     const [emailInput, setEmailInput] = useState("");
     const [emailError, setEmailError] = useState("");
     const [emailLoading, setEmailLoading] = useState(false);
 
-    // Étape 2 — formulaire
+    // Étape 2 - formulaire
     const [role, setRole]           = useState<UserRole>("patient");
     const [password, setPassword]   = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -70,7 +70,7 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
     const [loading, setLoading]     = useState(false);
     const [sentEmail, setSentEmail] = useState("");
 
-    // Écran succès — renvoi email
+    // Écran succès - renvoi email
     const RESEND_DELAY = 60; // secondes avant que le bouton soit actif
     const [resendCooldown, setResendCooldown] = useState(RESEND_DELAY);
     const [resendLoading, setResendLoading]   = useState(false);
@@ -80,7 +80,7 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
     const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // -------------------------------------------------------
-    // ÉTAPE 1 — Vérification de l'email
+    // ÉTAPE 1 - Vérification de l'email
     // -------------------------------------------------------
     async function handleEmailCheck(event: FormEvent) {
         event.preventDefault();
@@ -107,7 +107,7 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
     }
 
     // -------------------------------------------------------
-    // ÉTAPE 2 — Soumission du formulaire complet
+    // ÉTAPE 2 - Soumission du formulaire complet
     // -------------------------------------------------------
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -268,7 +268,7 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
     }
 
     // -------------------------------------------------------
-    // ÉTAPE 1 — Saisie et vérification de l'email
+    // ÉTAPE 1 - Saisie et vérification de l'email
     // -------------------------------------------------------
     if (step === "email") {
         return (
@@ -315,7 +315,7 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
     }
 
     // -------------------------------------------------------
-    // ÉTAPE 2 — Formulaire complet
+    // ÉTAPE 2 - Formulaire complet
     // -------------------------------------------------------
     const pwdAllValid = PWD_RULES.every((r) => r.test(password));
 

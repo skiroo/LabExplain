@@ -37,7 +37,7 @@ function Footer({ lang }: FooterProps) {
             accessibility: "Aide & accessibilité",
             support: "Support",
             faq: "FAQ",
-            copyright: `© ${year} LabExplain — Projet académique ING2`,
+            copyright: `© ${year} LabExplain - Projet académique ING2`,
             nodiag: "LabExplain ne fournit aucun diagnostic médical.",
         },
         en: {
@@ -53,7 +53,7 @@ function Footer({ lang }: FooterProps) {
             accessibility: "Help & accessibility",
             support: "Support",
             faq: "FAQ",
-            copyright: `© ${year} LabExplain — Academic project ING2`,
+            copyright: `© ${year} LabExplain - Academic project ING2`,
             nodiag: "LabExplain does not provide any medical diagnosis.",
         },
         es: {
@@ -69,7 +69,7 @@ function Footer({ lang }: FooterProps) {
             accessibility: "Ayuda y accesibilidad",
             support: "Soporte",
             faq: "FAQ",
-            copyright: `© ${year} LabExplain — Proyecto académico ING2`,
+            copyright: `© ${year} LabExplain - Proyecto académico ING2`,
             nodiag: "LabExplain no proporciona ningún diagnóstico médico.",
         },
         ar: {
@@ -85,7 +85,7 @@ function Footer({ lang }: FooterProps) {
             accessibility: "المساعدة وإمكانية الوصول",
             support: "الدعم",
             faq: "الأسئلة الشائعة",
-            copyright: `© ${year} LabExplain — مشروع أكاديمي ING2`,
+            copyright: `© ${year} LabExplain - مشروع أكاديمي ING2`,
             nodiag: "لا يقدم LabExplain أي تشخيص طبي.",
         },
     };

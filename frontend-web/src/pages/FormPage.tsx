@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ChatBot from "../components/Chatbot";
 import Header from "../components/Header";
 import { translate } from "../data/translations";
+import type { SummaryResult } from "../types/chat";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
 
@@ -15,11 +16,8 @@ type FormPageProps = {
   onUserChange: () => void;
 };
 
-type ViewMode = "new" | "drafts" | "sent";
-
 function FormPage({ lang, font, user, onLangChange, onFontChange, onUserChange }: FormPageProps) {
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<ViewMode>("new");
 
   useEffect(() => {
     if (!user) {
@@ -27,25 +25,7 @@ function FormPage({ lang, font, user, onLangChange, onFontChange, onUserChange }
     }
   }, [user, navigate]);
 
-  if (!user) {
-    return null;
-  }
-
-  function renderContent() {
-    if (user?.role === "medecin") {
-      return <div className="card">Aucune consultation reçue pour le moment.</div>;
-    }
-
-    if (viewMode === "drafts") {
-      return <div className="card">Brouillons à compléter.</div>;
-    }
-
-    if (viewMode === "sent") {
-      return <div className="card">Aucun envoi pour le moment.</div>;
-    }
-
-    return <ChatBot lang={lang} />;
-  }
+  if (!user) return null;
 
   return (
     <>
@@ -83,29 +63,6 @@ function FormPage({ lang, font, user, onLangChange, onFontChange, onUserChange }
 
         <section className="form-layout-premium">
           <aside className="form-sidebar">
-            <div className="sidebar-card">
-              <h3>Navigation</h3>
-              <div className="sidebar-menu">
-                {user.role === "medecin" ? (
-                  <button type="button" onClick={() => setViewMode("sent")}>
-                    {translate(lang, "consultReceived")}
-                  </button>
-                ) : (
-                  <>
-                    <button type="button" onClick={() => setViewMode("new")}>
-                      {translate(lang, "newForm")}
-                    </button>
-                    <button type="button" onClick={() => setViewMode("drafts")}>
-                      {translate(lang, "myDrafts")}
-                    </button>
-                    <button type="button" onClick={() => setViewMode("sent")}>
-                      {translate(lang, "mySent")}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
             <div className="sidebar-card soft-card">
               <h3>Pourquoi ce formulaire ?</h3>
               <p>
@@ -126,7 +83,7 @@ function FormPage({ lang, font, user, onLangChange, onFontChange, onUserChange }
           <section className="form-main-panel">
             <div className="panel-topbar">
               <div>
-                <span className="section-kicker">Espace patient / médecin</span>
+                <span className="section-kicker">Espace patient</span>
                 <h2>Préparation de consultation</h2>
               </div>
               <div className="panel-status">
@@ -135,7 +92,20 @@ function FormPage({ lang, font, user, onLangChange, onFontChange, onUserChange }
               </div>
             </div>
 
-            <div className="form-content-box">{renderContent()}</div>
+            <div className="form-content-box">
+              {user.role === "medecin" ? (
+                <div className="card">
+                  Les comptes-rendus reçus de vos patients sont disponibles dans votre tableau de bord.
+                </div>
+              ) : (
+                <ChatBot
+                  lang={lang}
+                  onCompleted={(result: SummaryResult, doctorName: string, rendezvousId: number | null) => {
+                    navigate("/resultat", { state: { data: result, doctorName, rendezvousId } });
+                  }}
+                />
+              )}
+            </div>
           </section>
         </section>
       </main>

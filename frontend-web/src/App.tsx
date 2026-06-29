@@ -8,6 +8,7 @@ import ConfirmEmailPage from "./pages/ConfirmEmailPage";
 import FormPage        from "./pages/FormPage";
 import DashboardPage   from "./pages/DashboardPage";
 import ResultPage      from "./pages/ResultPage";
+import AppointmentPage from "./pages/AppointmentPage";
 import AboutPage       from "./pages/AboutPage";
 import SettingsPage    from "./pages/SettingsPage";
 import {
@@ -20,6 +21,7 @@ import {
 import type { FontMode, Lang } from "./types/lang";
 import type { User } from "./types/user";
 import Footer from "./components/Footer";
+import TestPdfPage from "./pages/TestPdfPage";
 
 type PageProps = {
     lang: Lang;
@@ -91,12 +93,14 @@ function App() {
                 <Route path="/connexion"        element={<LoginPage         {...pageProps} />} />
                 <Route path="/inscription"      element={<RegisterPage      {...pageProps} />} />
                 <Route path="/confirmer-email"  element={<ConfirmEmailPage  {...pageProps} />} />
+                <Route path="/test-pdf" element={<TestPdfPage />} />
 
                 {/* Pages protégées */}
-                <Route path="/dashboard"  element={<RequireAuth user={user}><DashboardPage  {...pageProps} /></RequireAuth>} />
-                <Route path="/formulaire" element={<RequireAuth user={user}><FormPage        {...pageProps} /></RequireAuth>} />
-                <Route path="/resultat"   element={<RequireAuth user={user}><ResultPage      {...pageProps} /></RequireAuth>} />
-                <Route path="/parametres" element={<RequireAuth user={user}><SettingsPage    {...pageProps} /></RequireAuth>} />
+                <Route path="/dashboard"   element={<RequireAuth user={user}><DashboardPage   {...pageProps} /></RequireAuth>} />
+                <Route path="/formulaire"  element={<RequireAuth user={user}><FormPage         {...pageProps} /></RequireAuth>} />
+                <Route path="/resultat"    element={<RequireAuth user={user}><ResultPage       {...pageProps} /></RequireAuth>} />
+                <Route path="/rendez-vous" element={<RequireAuth user={user}><AppointmentPage  {...pageProps} /></RequireAuth>} />
+                <Route path="/parametres"  element={<RequireAuth user={user}><SettingsPage     {...pageProps} /></RequireAuth>} />
 
                 {/* 404 */}
                 <Route path="*" element={<NotFoundPage {...pageProps} />} />

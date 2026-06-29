@@ -35,7 +35,7 @@ function ConfirmEmailPage({ lang, font, user, onLangChange, onFontChange, onUser
 
         if (!token) {
             setStatus("error");
-            setMessage("Lien invalide — aucun token trouvé.");
+            setMessage("Lien invalide - aucun token trouvé.");
             return;
         }
 

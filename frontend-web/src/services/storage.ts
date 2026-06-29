@@ -2,69 +2,45 @@
 Fichier : storage.ts
 Dossier : src/services/
 Description :
-  Gère les données locales du frontend LabExplain.
-  Le backend Flask devient progressivement la source principale pour les utilisateurs,
-  mais le localStorage reste utilisé pour l'utilisateur connecté, la langue, la police
-  et certaines données temporaires encore utilisées par l'interface.
+  Gère uniquement les préférences locales du frontend LabExplain
+  (utilisateur courant en session, langue, police).
+  Toutes les données métier (utilisateurs, médecins, consultations,
+  rendez-vous) sont désormais gérées exclusivement par le backend Flask.
 */
 
-import { demoUsers } from "../data/demoUsers";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
 
 export const STORAGE = {
-  users: "labexplain_users",
-  currentUser: "labexplain_current_user",
-  drafts: "labexplain_drafts",
-  sentForms: "labexplain_sent_forms",
-  lang: "labexplain_preferred_lang",
-  font: "labexplain_preferred_font",
+    currentUser: "labexplain_current_user",
+    lang: "labexplain_preferred_lang",
+    font: "labexplain_preferred_font",
 };
 
-export function getUsers(): User[] {
-  return JSON.parse(localStorage.getItem(STORAGE.users) || "[]");
-}
-
-export function setUsers(users: User[]) {
-  localStorage.setItem(STORAGE.users, JSON.stringify(users));
-}
-
-export function seedUsers() {
-  // Fonction gardée temporairement pour ne pas casser les anciennes pages
-  if (getUsers().length === 0) {
-    setUsers(demoUsers);
-  }
-}
-
 export function getCurrentUser(): User | null {
-  return JSON.parse(localStorage.getItem(STORAGE.currentUser) || "null");
+    return JSON.parse(localStorage.getItem(STORAGE.currentUser) || "null");
 }
 
 export function setCurrentUser(user: User) {
-  localStorage.setItem(STORAGE.currentUser, JSON.stringify(user));
+    localStorage.setItem(STORAGE.currentUser, JSON.stringify(user));
 }
 
 export function removeCurrentUser() {
-  localStorage.removeItem(STORAGE.currentUser);
-}
-
-export function getDoctors(): User[] {
-  // Fonction temporaire, sera remplacée par un appel à /api/doctors
-  return getUsers().filter((user) => user.role === "medecin");
+    localStorage.removeItem(STORAGE.currentUser);
 }
 
 export function getStoredLang(): Lang {
-  return (localStorage.getItem(STORAGE.lang) as Lang) || "fr";
+    return (localStorage.getItem(STORAGE.lang) as Lang) || "fr";
 }
 
 export function setStoredLang(lang: Lang) {
-  localStorage.setItem(STORAGE.lang, lang);
+    localStorage.setItem(STORAGE.lang, lang);
 }
 
 export function getStoredFont(): FontMode {
-  return (localStorage.getItem(STORAGE.font) as FontMode) || "standard";
+    return (localStorage.getItem(STORAGE.font) as FontMode) || "standard";
 }
 
 export function setStoredFont(font: FontMode) {
-  localStorage.setItem(STORAGE.font, font);
+    localStorage.setItem(STORAGE.font, font);
 }

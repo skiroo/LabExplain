@@ -2,7 +2,7 @@
 Fichier : auth.ts
 Dossier : src/services/
 Description :
-  Fonctions d'authentification — nouveau schéma RGPD Option B.
+  Fonctions d'authentification - nouveau schéma RGPD Option B.
   - loginUser  : connexion + stockage id_compte dans localStorage
   - registerUser : inscription (renvoie vers page d'attente email)
   - logoutUser : appelle POST /api/auth/logout puis nettoie le localStorage
@@ -39,7 +39,7 @@ export async function loginUser(
             return { user: null, message: response.message };
         }
 
-        // Stocke l'utilisateur complet — id_compte est inclus dans user
+        // Stocke l'utilisateur complet - id_compte est inclus dans user
         setCurrentUser(response.data.user);
         localStorage.setItem("labexplain_token", response.data.token);
 
@@ -72,10 +72,10 @@ export async function registerUser(
 
 export async function logoutUser(): Promise<void> {
     try {
-        // Notifie le backend — déclenche l'email de déconnexion
+        // Notifie le backend - déclenche l'email de déconnexion
         await apiPost("/auth/logout", {});
     } catch {
-        // Silencieux — on nettoie le localStorage de toute façon
+        // Silencieux - on nettoie le localStorage de toute façon
     }
     removeCurrentUser();
     localStorage.removeItem("labexplain_token");

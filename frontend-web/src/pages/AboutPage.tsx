@@ -31,14 +31,14 @@ function AboutPage({ lang, font, user, onLangChange, onFontChange, onUserChange 
           <h1>LabExplain</h1>
           <p className="slogan">Préparez vos questions. Optimisez votre consultation.</p>
           <p>LabExplain est un assistant intelligent basé sur l'IA qui aide les patients à préparer leur consultation médicale...</p>
-          <p className="muted">Projet académique ING2 — EFREI Paris Panthéon-Assas Université, 2025-2026. Mentor : Julien SAID</p>
+          <p className="muted">Projet académique ING2 - EFREI Paris Panthéon-Assas Université, 2025-2026. Mentor : Julien SAID</p>
         </section>
 
         <section className="about-card">
           <h2>L'équipe</h2>
           <ul className="team-list">
             {team.map(m => (
-              <li key={m.name}><strong>{m.name}</strong> — {m.role}</li>
+              <li key={m.name}><strong>{m.name}</strong> - {m.role}</li>
             ))}
           </ul>
         </section>

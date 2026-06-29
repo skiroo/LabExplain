@@ -23,6 +23,6 @@ export type User = {
     gender?:         "M" | "F" | "O" | string;
     specialite?:     string;
 
-    // Indicateur — les données médicales existent en base (chiffrées)
+    // Indicateur - les données médicales existent en base (chiffrées)
     has_medical_data?: boolean;
 };

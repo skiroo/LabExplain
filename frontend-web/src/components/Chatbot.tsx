@@ -1,190 +1,289 @@
-import { useMemo, useState } from "react";
-import { botSteps } from "../data/botSteps";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { apiPost } from "../services/api";
+import { getUpcomingRendezVous } from "../services/rendezvousApi";
 import { translate } from "../data/translations";
-import { getDoctors } from "../services/storage";
-import type { ChatData } from "../types/chat";
+import type {
+  InterviewHistoryItem,
+  InterviewResponse,
+  RendezVous,
+  SummaryResult,
+} from "../types/chat";
 import type { Lang } from "../types/lang";
 
 type ChatBotProps = {
   lang: Lang;
+  onCompleted: (result: SummaryResult, doctorName: string, rendezvousId: number | null) => void;
 };
 
-function ChatBot({ lang }: ChatBotProps) {
-  const doctors = useMemo(() => getDoctors(), []);
-  const [currentStep, setCurrentStep] = useState("start");
+type DisplayMessage = {
+  role: "bot" | "user";
+  text: string;
+};
+
+// Nombre maximum de questions - doit rester cohérent avec MAX_INTERVIEW_TURNS
+// côté backend (backend/ai/interview_handler.py). Sert ici uniquement à
+// afficher une barre de progression indicative.
+const MAX_TURNS = 15;
+
+function ChatBot({ lang, onCompleted }: ChatBotProps) {
+  const [rendezvousList, setRendezvousList] = useState<RendezVous[]>([]);
+  const [rendezvousLoaded, setRendezvousLoaded] = useState(false);
+  const [selectedRendezvousId, setSelectedRendezvousId] = useState<string>("");
+  const [doctorChosen, setDoctorChosen] = useState(false);
+
+  const [history, setHistory] = useState<InterviewHistoryItem[]>([]);
+  const [messages, setMessages] = useState<DisplayMessage[]>([]);
+  const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [textValue, setTextValue] = useState("");
-  const [rangeValue, setRangeValue] = useState(5);
-  const [doctorValue, setDoctorValue] = useState(() => {
-    const firstDoctor = doctors[0];
-    return firstDoctor ? `${firstDoctor.nom} ${firstDoctor.prenom}` : "";
-  });
-  const [chatData, setChatData] = useState<ChatData>({
-    id: Date.now(),
-    answers: {},
-    history: [{ role: "bot", text: translate(lang, "bot_hello"), translationKey: "bot_hello" }],
-  });
 
-  const step = botSteps[currentStep];
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [finished, setFinished] = useState(false);
 
-  function restartChat() {
-    setCurrentStep("start");
-    setTextValue("");
-    setRangeValue(5);
-    setChatData({
-      id: Date.now(),
-      answers: {},
-      history: [{ role: "bot", text: translate(lang, "bot_hello"), translationKey: "bot_hello" }],
+  const turnsAsked = useMemo(
+    () => history.filter((h) => h.role === "assistant").length,
+    [history]
+  );
+
+  const selectedRendezvous = useMemo(
+    () => rendezvousList.find((r) => String(r.id_rendezvous) === selectedRendezvousId) || null,
+    [rendezvousList, selectedRendezvousId]
+  );
+
+  const doctorName = selectedRendezvous
+    ? `${selectedRendezvous.medecin_prenom} ${selectedRendezvous.medecin_nom}`
+    : "";
+
+  const chatBoxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    getUpcomingRendezVous().then((list) => {
+      setRendezvousList(list);
+      setRendezvousLoaded(true);
     });
+  }, []);
+
+  useEffect(() => {
+    chatBoxRef.current?.scrollTo({ top: chatBoxRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, currentOptions]);
+
+  // ── Appel d'un tour de l'entretien dynamique ────────────────────────────
+  async function requestNextTurn(nextHistory: InterviewHistoryItem[]) {
+    setLoading(true);
+    setErrorMsg("");
+
+    try {
+      const response = await apiPost<InterviewResponse>("/ai/interview", {
+        history: nextHistory,
+        doctorName,
+      });
+
+      if (!response.success || !response.data) {
+        setErrorMsg(response.message || "Erreur lors de la génération de la question.");
+        setLoading(false);
+        return;
+      }
+
+      const turn = response.data;
+      const updatedHistory: InterviewHistoryItem[] = [
+        ...nextHistory,
+        { role: "assistant", content: turn },
+      ];
+      setHistory(updatedHistory);
+
+      if (turn.status === "done") {
+        setFinished(true);
+        setMessages((prev) => [
+          ...prev,
+          { role: "bot", text: "Merci, j'ai toutes les informations nécessaires. Je prépare votre synthèse..." },
+        ]);
+        await requestSummary(turn);
+        return;
+      }
+
+      setMessages((prev) => [...prev, { role: "bot", text: turn.question }]);
+      setCurrentOptions(turn.options || []);
+    } catch {
+      setErrorMsg("Impossible de contacter l'assistant. Vérifiez votre connexion et réessayez.");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function processStep(value: string, label: string, next?: string) {
+  // ── Génération du résumé final une fois l'entretien terminé ─────────────
+  async function requestSummary(lastTurn: InterviewResponse) {
+    setLoading(true);
+    setErrorMsg("");
+
+    try {
+      const response = await apiPost<SummaryResult>("/ai/summary", {
+        symptoms: lastTurn.collectedData.symptoms,
+        medicalHistory: lastTurn.collectedData.medicalHistory,
+        currentTreatments: lastTurn.collectedData.currentTreatments,
+        painLevel: lastTurn.collectedData.painLevel,
+        additionalNotes: lastTurn.collectedData.additionalNotes,
+        language: lang,
+      });
+
+      if (!response.success || !response.data) {
+        setErrorMsg(response.message || "Erreur lors de la génération du résumé.");
+        setLoading(false);
+        return;
+      }
+
+      // On fusionne les éventuels signaux d'alarme repérés pendant l'entretien
+      // avec ceux détectés par le résumé final, sans doublon.
+      const mergedRedFlags = Array.from(
+        new Set([...(lastTurn.redFlags || []), ...(response.data.redFlags || [])])
+      );
+
+      onCompleted(
+        { ...response.data, redFlags: mergedRedFlags },
+        doctorName,
+        selectedRendezvous?.id_rendezvous ?? null
+      );
+    } catch {
+      setErrorMsg("Impossible de générer le résumé. Vérifiez votre connexion et réessayez.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function startInterview() {
+    setDoctorChosen(true);
+    setMessages([]);
+    requestNextTurn([]);
+  }
+
+  function answer(value: string) {
     const cleanValue = value.trim();
+    if (!cleanValue || loading || finished) return;
 
-    if (!cleanValue || !step) {
-      return;
-    }
-
-    const nextStep = next || step.next;
-
-    setChatData((previous) => {
-      const answers = { ...previous.answers };
-      if (currentStep === "start") {
-        answers.doctor = cleanValue;
-      } else {
-        answers[currentStep] = cleanValue;
-      }
-
-      const history = [...previous.history, { role: "user" as const, text: label }];
-
-      if (nextStep && botSteps[nextStep]) {
-        history.push({
-          role: "bot" as const,
-          text: translate(lang, botSteps[nextStep].key),
-          translationKey: botSteps[nextStep].key,
-        });
-      }
-
-      return { ...previous, answers, history };
-    });
-
-    if (nextStep) {
-      setCurrentStep(nextStep);
-    }
-
+    setMessages((prev) => [...prev, { role: "user", text: cleanValue }]);
+    setCurrentOptions([]);
     setTextValue("");
+
+    const nextHistory: InterviewHistoryItem[] = [
+      ...history,
+      { role: "user", content: cleanValue },
+    ];
+    requestNextTurn(nextHistory);
   }
 
-  function renderInputArea() {
-    if (!step) {
-      return null;
-    }
+  function restart() {
+    setHistory([]);
+    setMessages([]);
+    setCurrentOptions([]);
+    setTextValue("");
+    setFinished(false);
+    setErrorMsg("");
+    setDoctorChosen(false);
+    setSelectedRendezvousId("");
+  }
 
-    if (step.type === "doctor") {
-      if (doctors.length === 0) {
-        return <p>Aucun médecin disponible.</p>;
-      }
+  function formatRendezvousDate(dateHeure: string): string {
+    const date = new Date(dateHeure);
+    if (Number.isNaN(date.getTime())) return dateHeure;
+    return date.toLocaleString(lang === "en" ? "en-GB" : "fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
 
-      return (
-        <div>
-          <label htmlFor="doctorSelect">{translate(lang, "selectDoctor")}</label>
-          <select
-            id="doctorSelect"
-            value={doctorValue}
-            onChange={(event) => setDoctorValue(event.target.value)}
-          >
-            {doctors.map((doctor) => {
-              const name = `${doctor.nom} ${doctor.prenom}`;
-              return (
-                <option key={doctor.email} value={name}>
-                  {name}
-                </option>
-              );
-            })}
-          </select>
-          <button type="button" onClick={() => processStep(doctorValue, doctorValue)}>
-            {translate(lang, "next")}
-          </button>
-        </div>
-      );
-    }
-
-    if (step.type === "choice") {
-      return (
-        <div className="choice-grid">
-          {step.options?.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => processStep(option.value, translate(lang, option.label), option.next)}
-            >
-              {translate(lang, option.label)}
-            </button>
-          ))}
-        </div>
-      );
-    }
-
-    if (step.type === "text") {
-      return (
-        <div>
-          <input
-            type="text"
-            placeholder="..."
-            value={textValue}
-            onChange={(event) => setTextValue(event.target.value)}
-          />
-          <button type="button" onClick={() => processStep(textValue, textValue)}>
-            {translate(lang, "next")}
-          </button>
-        </div>
-      );
-    }
-
-    if (step.type === "range") {
-      return (
-        <div>
-          <input
-            type="range"
-            min={step.min}
-            max={step.max}
-            value={rangeValue}
-            onChange={(event) => setRangeValue(Number(event.target.value))}
-          />
-          <div>
-            <strong>{rangeValue}</strong>
-          </div>
-          <button
-            type="button"
-            onClick={() => processStep(String(rangeValue), String(rangeValue))}
-          >
-            {translate(lang, "next")}
-          </button>
-        </div>
-      );
-    }
-
+  // ── Étape 0 : choix du rendez-vous à préparer ────────────────────────────
+  if (!doctorChosen) {
     return (
-      <div className="summary-box">
-        <p>{translate(lang, step.key)}</p>
-        <button type="button" onClick={restartChat}>
-          {translate(lang, "newForm")}
-        </button>
+      <div className="chat-shell">
+        <div className="summary-box">
+          <p>Quel rendez-vous souhaitez-vous préparer ?</p>
+
+          {!rendezvousLoaded ? (
+            <p>Chargement de vos rendez-vous...</p>
+          ) : rendezvousList.length === 0 ? (
+            <>
+              <p>Vous n'avez aucun rendez-vous à venir déclaré.</p>
+              <Link to="/rendez-vous" className="button secondary">
+                Déclarer un rendez-vous
+              </Link>
+            </>
+          ) : (
+            <select
+              value={selectedRendezvousId}
+              onChange={(event) => setSelectedRendezvousId(event.target.value)}
+            >
+              <option value="">- Sélectionner -</option>
+              {rendezvousList.map((rdv) => (
+                <option key={rdv.id_rendezvous} value={String(rdv.id_rendezvous)}>
+                  {formatRendezvousDate(rdv.date_heure)} - {rdv.medecin_prenom} {rdv.medecin_nom}
+                  {rdv.medecin_specialite ? ` (${rdv.medecin_specialite})` : ""}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <button type="button" onClick={startInterview} disabled={!selectedRendezvous}>
+            {translate(lang, "next")}
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="chat-shell">
-      <div id="chat-box">
-        {chatData.history.map((item, index) => (
+      <div className="progress-bar">
+        <span style={{ width: `${Math.min((turnsAsked / MAX_TURNS) * 100, 100)}%` }} />
+      </div>
+
+      <div id="chat-box" ref={chatBoxRef}>
+        {messages.map((item, index) => (
           <div key={`${item.role}-${index}`} className={`${item.role}-msg`}>
-            {item.role === "bot" && item.translationKey
-              ? translate(lang, item.translationKey)
-              : item.text}
+            {item.text}
           </div>
         ))}
+        {loading && <div className="bot-msg">…</div>}
       </div>
-      <div id="input-area">{renderInputArea()}</div>
+
+      <div id="input-area">
+        {errorMsg && <p className="error-inline">{errorMsg}</p>}
+
+        {finished ? (
+          <div className="summary-box">
+            <p>Synthèse en cours de préparation.</p>
+            <button type="button" onClick={restart}>
+              {translate(lang, "newForm")}
+            </button>
+          </div>
+        ) : currentOptions.length > 0 ? (
+          <div className="choice-grid">
+            {currentOptions.map((option) => (
+              <button key={option} type="button" disabled={loading} onClick={() => answer(option)}>
+                {option}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div>
+            <input
+              type="text"
+              placeholder="Votre réponse..."
+              value={textValue}
+              disabled={loading}
+              onChange={(event) => setTextValue(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") answer(textValue);
+              }}
+            />
+            <button type="button" disabled={loading} onClick={() => answer(textValue)}>
+              {translate(lang, "next")}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
