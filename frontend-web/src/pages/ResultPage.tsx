@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import { t } from "../i18n";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
+import BionicReading from "../components/BionicReading";
 
 type Props = {
   lang: Lang; font: FontMode; user: User | null;
@@ -72,7 +73,7 @@ function ResultPage({ lang, font, user, onLangChange, onFontChange, onUserChange
   }
 
   return (
-    <>
+    <BionicReading active={font === "tdah"}>
       <Header simple lang={lang} font={font} user={user}
         onLangChange={onLangChange} onFontChange={onFontChange} onUserChange={onUserChange} />
       <main className="result-layout">
@@ -120,7 +121,7 @@ function ResultPage({ lang, font, user, onLangChange, onFontChange, onUserChange
           </div>
         </section>
       </main>
-    </>
+    </BionicReading>
   );
 }
 

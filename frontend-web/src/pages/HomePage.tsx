@@ -3,6 +3,7 @@ import Header from "../components/Header";
 import { t } from "../i18n";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
+import BionicReading from "../components/BionicReading";
 
 type HomePageProps = {
   lang: Lang;
@@ -21,7 +22,7 @@ function HomePage({ lang, font, user, onLangChange, onFontChange, onUserChange }
   }
 
   return (
-    <>
+    <BionicReading active={font === "tdah"}>
       <Header
         lang={lang}
         font={font}
@@ -156,7 +157,7 @@ function HomePage({ lang, font, user, onLangChange, onFontChange, onUserChange }
           </div>
         </section>
       </main>
-    </>
+    </BionicReading>
   );
 }
 

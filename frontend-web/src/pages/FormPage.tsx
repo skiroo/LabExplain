@@ -6,6 +6,7 @@ import { t } from "../i18n";
 import type { SummaryResult } from "../types/chat";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
+import BionicReading from "../components/BionicReading";
 
 type FormPageProps = {
   lang: Lang;
@@ -28,7 +29,7 @@ function FormPage({ lang, font, user, onLangChange, onFontChange, onUserChange }
   if (!user) return null;
 
   return (
-    <>
+    <BionicReading active={font === "tdah"}>
       <Header
         lang={lang}
         font={font}
@@ -98,6 +99,7 @@ function FormPage({ lang, font, user, onLangChange, onFontChange, onUserChange }
               ) : (
                 <ChatBot
                   lang={lang}
+                  font={font}
                   onCompleted={(result: SummaryResult, doctorName: string, rendezvousId: number | null) => {
                     navigate("/resultat", { state: { data: result, doctorName, rendezvousId } });
                   }}
@@ -107,7 +109,7 @@ function FormPage({ lang, font, user, onLangChange, onFontChange, onUserChange }
           </section>
         </section>
       </main>
-    </>
+    </BionicReading>
   );
 }
 

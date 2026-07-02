@@ -6,6 +6,7 @@ import { t } from "../i18n";
 import { loginUser } from "../services/auth";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
+import BionicReading from "../components/BionicReading";
 
 type LoginPageProps = {
     lang: Lang;
@@ -44,7 +45,7 @@ function LoginPage({ lang, font, user, onLangChange, onFontChange, onUserChange 
     }
 
     return (
-        <>
+        <BionicReading active={font === "tdah"}>
             <Header
                 simple
                 showFontSelect={false}
@@ -106,7 +107,7 @@ function LoginPage({ lang, font, user, onLangChange, onFontChange, onUserChange 
                     </div>
                 </section>
             </main>
-        </>
+        </BionicReading>
     );
 }
 

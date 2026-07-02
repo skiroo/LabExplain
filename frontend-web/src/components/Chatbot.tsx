@@ -3,16 +3,18 @@ import { Link } from "react-router-dom";
 import { apiPost } from "../services/api";
 import { getUpcomingRendezVous } from "../services/rendezvousApi";
 import { t } from "../i18n";
+import BionicReading from "./BionicReading";
 import type {
   InterviewHistoryItem,
   InterviewResponse,
   RendezVous,
   SummaryResult,
 } from "../types/chat";
-import type { Lang } from "../types/lang";
+import type { FontMode, Lang } from "../types/lang";
 
 type ChatBotProps = {
   lang: Lang;
+  font: FontMode;
   onCompleted: (result: SummaryResult, doctorName: string, rendezvousId: number | null) => void;
 };
 
@@ -26,7 +28,7 @@ type DisplayMessage = {
 // afficher une barre de progression indicative.
 const MAX_TURNS = 15;
 
-function ChatBot({ lang, onCompleted }: ChatBotProps) {
+function ChatBot({ lang, font, onCompleted }: ChatBotProps) {
   const [rendezvousList, setRendezvousList] = useState<RendezVous[]>([]);
   const [rendezvousLoaded, setRendezvousLoaded] = useState(false);
   const [selectedRendezvousId, setSelectedRendezvousId] = useState<string>("");
@@ -198,94 +200,98 @@ function ChatBot({ lang, onCompleted }: ChatBotProps) {
   // ── Étape 0 : choix du rendez-vous à préparer ────────────────────────────
   if (!doctorChosen) {
     return (
-      <div className="chat-shell">
-        <div className="summary-box">
-          <p>{t(lang, "chatbot.chooseAppointment")}</p>
+      <BionicReading active={font === "tdah"}>
+        <div className="chat-shell">
+          <div className="summary-box">
+            <p>{t(lang, "chatbot.chooseAppointment")}</p>
 
-          {!rendezvousLoaded ? (
-            <p>{t(lang, "chatbot.loadingAppointments")}</p>
-          ) : rendezvousList.length === 0 ? (
-            <>
-              <p>{t(lang, "chatbot.noUpcomingAppointment")}</p>
-              <Link to="/rendez-vous" className="button secondary">
-                {t(lang, "chatbot.declareAppointment")}
-              </Link>
-            </>
-          ) : (
-            <select
-              value={selectedRendezvousId}
-              onChange={(event) => setSelectedRendezvousId(event.target.value)}
-            >
-              <option value="">{t(lang, "chatbot.selectPlaceholder")}</option>
-              {rendezvousList.map((rdv) => (
-                <option key={rdv.id_rendezvous} value={String(rdv.id_rendezvous)}>
-                  {formatRendezvousDate(rdv.date_heure)} - {rdv.medecin_prenom} {rdv.medecin_nom}
-                  {rdv.medecin_specialite ? ` (${rdv.medecin_specialite})` : ""}
-                </option>
-              ))}
-            </select>
-          )}
+            {!rendezvousLoaded ? (
+              <p>{t(lang, "chatbot.loadingAppointments")}</p>
+            ) : rendezvousList.length === 0 ? (
+              <>
+                <p>{t(lang, "chatbot.noUpcomingAppointment")}</p>
+                <Link to="/rendez-vous" className="button secondary">
+                  {t(lang, "chatbot.declareAppointment")}
+                </Link>
+              </>
+            ) : (
+              <select
+                value={selectedRendezvousId}
+                onChange={(event) => setSelectedRendezvousId(event.target.value)}
+              >
+                <option value="">{t(lang, "chatbot.selectPlaceholder")}</option>
+                {rendezvousList.map((rdv) => (
+                  <option key={rdv.id_rendezvous} value={String(rdv.id_rendezvous)}>
+                    {formatRendezvousDate(rdv.date_heure)} - {rdv.medecin_prenom} {rdv.medecin_nom}
+                    {rdv.medecin_specialite ? ` (${rdv.medecin_specialite})` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
 
-          <button type="button" onClick={startInterview} disabled={!selectedRendezvous}>
-            {t(lang, "common.next")}
-          </button>
+            <button type="button" onClick={startInterview} disabled={!selectedRendezvous}>
+              {t(lang, "common.next")}
+            </button>
+          </div>
         </div>
-      </div>
+      </BionicReading>
     );
   }
 
   return (
-    <div className="chat-shell">
-      <div className="progress-bar">
-        <span style={{ width: `${Math.min((turnsAsked / MAX_TURNS) * 100, 100)}%` }} />
-      </div>
+    <BionicReading active={font === "tdah"}>
+      <div className="chat-shell">
+        <div className="progress-bar">
+          <span style={{ width: `${Math.min((turnsAsked / MAX_TURNS) * 100, 100)}%` }} />
+        </div>
 
-      <div id="chat-box" ref={chatBoxRef}>
-        {messages.map((item, index) => (
-          <div key={`${item.role}-${index}`} className={`${item.role}-msg`}>
-            {item.text}
-          </div>
-        ))}
-        {loading && <div className="bot-msg">…</div>}
-      </div>
+        <div id="chat-box" ref={chatBoxRef}>
+          {messages.map((item, index) => (
+            <div key={`${item.role}-${index}`} className={`${item.role}-msg`}>
+              {item.text}
+            </div>
+          ))}
+          {loading && <div className="bot-msg">…</div>}
+        </div>
 
-      <div id="input-area">
-        {errorMsg && <p className="error-inline">{errorMsg}</p>}
+        <div id="input-area">
+          {errorMsg && <p className="error-inline">{errorMsg}</p>}
 
-        {finished ? (
-          <div className="summary-box">
-            <p>{t(lang, "chatbot.summaryPreparing")}</p>
-            <button type="button" onClick={restart}>
-              {t(lang, "chatbot.newForm")}
-            </button>
-          </div>
-        ) : currentOptions.length > 0 ? (
-          <div className="choice-grid">
-            {currentOptions.map((option) => (
-              <button key={option} type="button" disabled={loading} onClick={() => answer(option)}>
-                {option}
+          {finished ? (
+            <div className="summary-box">
+              <p>{t(lang, "chatbot.summaryPreparing")}</p>
+              <button type="button" onClick={restart}>
+                {t(lang, "chatbot.newForm")}
               </button>
-            ))}
-          </div>
-        ) : (
-          <div>
-            <input
-              type="text"
-              placeholder={t(lang, "chatbot.inputPlaceholder")}
-              value={textValue}
-              disabled={loading}
-              onChange={(event) => setTextValue(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") answer(textValue);
-              }}
-            />
-            <button type="button" disabled={loading} onClick={() => answer(textValue)}>
-              {t(lang, "common.next")}
-            </button>
-          </div>
-        )}
+            </div>
+          ) : currentOptions.length > 0 ? (
+            <div className="choice-grid">
+              {currentOptions.map((option) => (
+                <button key={option} type="button" disabled={loading} onClick={() => answer(option)}>
+                  {option}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div>
+              <input
+                type="text"
+                placeholder={t(lang, "chatbot.inputPlaceholder")}
+                value={textValue}
+                disabled={loading}
+                onChange={(event) => setTextValue(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") answer(textValue);
+                }}
+              />
+              <button type="button" disabled={loading} onClick={() => answer(textValue)}>
+                {t(lang, "common.next")}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </BionicReading>
   );
 }
 

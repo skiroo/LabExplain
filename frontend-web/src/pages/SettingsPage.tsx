@@ -8,6 +8,7 @@ import { notify } from "../services/notifications";
 import { t } from "../i18n";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
+import BionicReading from "../components/BionicReading";
 
 type Props = {
     lang: Lang; font: FontMode; user: User | null;
@@ -92,7 +93,7 @@ function SettingsPage({ lang, font, user, onLangChange, onFontChange, onUserChan
     if (!user) return null;
     
     return (
-        <>
+        <BionicReading active={font === "tdah"}>
         <Header lang={lang} font={font} user={user}
         onLangChange={onLangChange} onFontChange={onFontChange} onUserChange={onUserChange} />
         <main className="settings-layout">
@@ -194,7 +195,7 @@ function SettingsPage({ lang, font, user, onLangChange, onFontChange, onUserChan
         </div>
         </section>
         </main>
-        </>
+        </BionicReading>
     );
 }
 

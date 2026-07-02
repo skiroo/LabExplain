@@ -568,25 +568,97 @@ footer {
     font-family: 'Segoe UI', Arial, sans-serif;
 }
 
+/* Malvoyance : la police Atkinson Hyperlegible (déjà importée dans index.css
+   mais jamais utilisée jusqu'ici) est conçue pour distinguer les caractères
+   souvent confondus en basse vision (I/l/1, O/0...). On y ajoute un texte
+   nettement plus grand, un contraste renforcé et des cibles cliquables
+   plus grandes pour les personnes ayant aussi des difficultés motrices. */
 .font-malvoyant {
-    font-size: 1.2rem;
-    line-height: 1.9;
+    font-family: 'Atkinson Hyperlegible', 'Segoe UI', Arial, sans-serif;
+    font-size: 1.35rem;
+    line-height: 2;
+    letter-spacing: 0.02em;
+    color: #000;
+}
+
+.font-malvoyant h1,
+.font-malvoyant h2,
+.font-malvoyant h3 {
+    font-weight: 800;
 }
 
 .font-malvoyant input,
 .font-malvoyant button,
 .font-malvoyant select,
-.font-malvoyant textarea {
-    font-size: 1.05em;
+.font-malvoyant textarea,
+.font-malvoyant a {
+    font-size: 1.15em;
+    min-height: 48px;
 }
 
+.font-malvoyant :focus-visible {
+    outline: 3px solid #000;
+    outline-offset: 2px;
+}
+
+/* Dyslexie : "OpenDyslexic" n'étant chargée par aucun @font-face, elle
+   retombait toujours sur Comic Sans MS. On garde ce repli volontairement
+   (forme des lettres bien différenciées, largement recommandée en l'absence
+   d'OpenDyslexic), mais le vrai gain pour la lecture vient de l'espacement :
+   lettres et mots plus espacés, interlignage large, texte jamais justifié,
+   colonnes de texte raccourcies pour ne pas perdre la ligne. */
 .font-dyslexique {
-    font-family: "OpenDyslexic", "Comic Sans MS", sans-serif !important;
+    font-family: 'OpenDyslexic', 'Comic Sans MS', Verdana, sans-serif !important;
+    line-height: 1.9;
+    letter-spacing: 0.06em;
+    word-spacing: 0.18em;
+    text-align: left !important;
 }
 
+.font-dyslexique p,
+.font-dyslexique li {
+    max-width: 68ch;
+}
+
+.font-dyslexique em,
+.font-dyslexique i {
+    font-style: normal;
+    text-decoration: underline;
+}
+
+/* TDAH : Lexend est une police conçue et testée pour réduire la charge de
+   lecture et améliorer la fluidité, contrairement à un simple ajustement
+   d'interlignage. On raccourcit aussi les lignes pour faciliter le suivi,
+   on coupe les animations et transitions qui détournent l'attention, et on
+   retire les dégradés décoratifs de fond au profit d'un aplat neutre. */
 .font-tdah {
-    line-height: 1.8;
-    letter-spacing: 0.3px;
+    font-family: 'Lexend', 'Segoe UI', Arial, sans-serif;
+    line-height: 1.9;
+    letter-spacing: 0.02em;
+}
+
+.font-tdah p,
+.font-tdah li {
+    max-width: 60ch;
+}
+
+.font-tdah *,
+.font-tdah *::before,
+.font-tdah *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+}
+
+.font-tdah .home-premium,
+.font-tdah .form-premium-page {
+    background: var(--bg);
+}
+
+/* Mise en gras du début des mots ("bionic reading"), injectée par le
+   composant BionicReading quand le mode TDAH est actif. */
+.bionic-bold {
+    font-weight: 700;
 }
 
 /* ================= HOME PREMIUM ================= */

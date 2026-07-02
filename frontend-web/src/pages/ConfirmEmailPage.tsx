@@ -5,6 +5,7 @@ import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
 import Header from "../components/Header";
 import { t } from "../i18n";
+import BionicReading from "../components/BionicReading";
 
 type Props = {
     lang: Lang;
@@ -51,7 +52,7 @@ function ConfirmEmailPage({ lang, font, user, onLangChange, onFontChange, onUser
     }, [searchParams, lang]);
 
     return (
-        <>
+        <BionicReading active={font === "tdah"}>
             <Header
                 simple
                 showFontSelect={false}
@@ -103,7 +104,7 @@ function ConfirmEmailPage({ lang, font, user, onLangChange, onFontChange, onUser
 
                 </section>
             </main>
-        </>
+        </BionicReading>
     );
 }
 

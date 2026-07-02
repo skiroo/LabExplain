@@ -11,6 +11,7 @@ Toutes les données viennent du backend Flask — plus aucune donnée mockée.
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Header from "../components/Header";
+import BionicReading from "../components/BionicReading";
 import { apiGet, apiDelete } from "../services/api";
 import { t } from "../i18n";
 import type { FontMode, Lang } from "../types/lang";
@@ -167,7 +168,7 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
     
     if (user.role === "medecin") {
         return (
-            <>
+            <BionicReading active={font === "tdah"}>
             <Header lang={lang} font={font} user={user} onLangChange={onLangChange} onFontChange={onFontChange} onUserChange={onUserChange} />
             <main className={`dashboard-root ${mounted ? "dashboard-mounted" : ""}`}>
             <aside className="dashboard-sidebar">
@@ -220,7 +221,7 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
             </div>
             </section>
             </main>
-            </>
+            </BionicReading>
         );
     }
     
@@ -236,7 +237,7 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
     const rdvPasses = rendezvousList.filter((r) => r.statut === "passe");
     
     return (
-        <>
+        <BionicReading active={font === "tdah"}>
         <Header lang={lang} font={font} user={user} onLangChange={onLangChange} onFontChange={onFontChange} onUserChange={onUserChange} />
         
         <main className={`dashboard-root ${mounted ? "dashboard-mounted" : ""}`}>
@@ -495,7 +496,7 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
         )}
         </section>
         </main>
-        </>
+        </BionicReading>
     );
 }
 

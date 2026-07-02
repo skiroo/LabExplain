@@ -8,6 +8,7 @@ import { createRendezVous } from "../services/rendezvousApi";
 import type { Cabinet } from "../types/chat";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
+import BionicReading from "../components/BionicReading";
 
 type Props = {
   lang: Lang; font: FontMode; user: User | null;
@@ -70,7 +71,7 @@ function AppointmentPage({ lang, font, user, onLangChange, onFontChange, onUserC
   }
 
   return (
-    <>
+    <BionicReading active={font === "tdah"}>
       <Header simple lang={lang} font={font} user={user}
         onLangChange={onLangChange} onFontChange={onFontChange} onUserChange={onUserChange} />
       <main className="appointment-layout">
@@ -116,7 +117,7 @@ function AppointmentPage({ lang, font, user, onLangChange, onFontChange, onUserC
           </div>
         </section>
       </main>
-    </>
+    </BionicReading>
   );
 }
 

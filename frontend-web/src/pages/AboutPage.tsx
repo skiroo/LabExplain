@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import { t } from "../i18n";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
+import BionicReading from "../components/BionicReading";
 
 type Props = {
   lang: Lang; font: FontMode; user: User | null;
@@ -29,7 +30,7 @@ const team: TeamMember[] = [
 function AboutPage({ lang, font, user, onLangChange, onFontChange, onUserChange }: Props) {
   const navigate = useNavigate();
   return (
-    <>
+    <BionicReading active={font === "tdah"}>
       <Header lang={lang} font={font} user={user}
         onLangChange={onLangChange} onFontChange={onFontChange} onUserChange={onUserChange} />
       <main className="about-layout">
@@ -60,7 +61,7 @@ function AboutPage({ lang, font, user, onLangChange, onFontChange, onUserChange 
 
         <button className="button" onClick={() => navigate(-1)}>← {t(lang, "about.back")}</button>
       </main>
-    </>
+    </BionicReading>
   );
 }
 
