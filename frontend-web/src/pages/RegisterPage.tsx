@@ -11,7 +11,7 @@ import { useState, useRef } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
-import { translate } from "../data/translations";
+import { t } from "../i18n";
 import { registerUser } from "../services/auth";
 import { apiPost } from "../services/api";
 import type { FontMode, Lang } from "../types/lang";
@@ -27,15 +27,16 @@ type Props = {
 };
 
 // Règles de validation du mot de passe - miroir exact de validators.py
+// Le libellé passe par une clé de traduction plutôt qu'un texte figé.
 const PWD_RULES = [
-    { id: "length",    label: "8 caractères minimum",          test: (p: string) => p.length >= 8 },
-    { id: "upper",     label: "Une majuscule",                 test: (p: string) => /[A-Z]/.test(p) },
-    { id: "lower",     label: "Une minuscule",                 test: (p: string) => /[a-z]/.test(p) },
-    { id: "digit",     label: "Un chiffre",                   test: (p: string) => /\d/.test(p) },
-    { id: "special",   label: "Un caractère spécial (!@#...)", test: (p: string) => /[!@#$%^&*(),.?":{}|<>_\-\+=\[\]\\/]/.test(p) },
+    { id: "length",    key: "passwordRules.length",  test: (p: string) => p.length >= 8 },
+    { id: "upper",     key: "passwordRules.upper",    test: (p: string) => /[A-Z]/.test(p) },
+    { id: "lower",     key: "passwordRules.lower",    test: (p: string) => /[a-z]/.test(p) },
+    { id: "digit",     key: "passwordRules.digit",    test: (p: string) => /\d/.test(p) },
+    { id: "special",   key: "passwordRules.special",  test: (p: string) => /[!@#$%^&*(),.?":{}|<>_\-\+=\[\]\\/]/.test(p) },
 ];
 
-function PasswordRules({ password }: { password: string }) {
+function PasswordRules({ password, lang }: { password: string; lang: Lang }) {
     if (!password) return null;
     return (
         <ul style={{ listStyle: "none", padding: 0, margin: "0.4rem 0 0.8rem", fontSize: "0.82rem" }}>
@@ -44,7 +45,7 @@ function PasswordRules({ password }: { password: string }) {
                 return (
                     <li key={rule.id} style={{ color: ok ? "#16a34a" : "#dc2626", display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.2rem" }}>
                         <span style={{ fontWeight: "bold" }}>{ok ? "✓" : "✗"}</span>
-                        {rule.label}
+                        {t(lang, rule.key)}
                     </li>
                 );
             })}
@@ -75,6 +76,10 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
     const [resendCooldown, setResendCooldown] = useState(RESEND_DELAY);
     const [resendLoading, setResendLoading]   = useState(false);
     const [resendMsg, setResendMsg]           = useState("");
+    // On suivait auparavant si resendMsg contenait le mot "Erreur" pour
+    // choisir la couleur du message : ça ne fonctionne plus une fois le
+    // texte traduit. On garde donc l'état succès/erreur séparément.
+    const [resendIsError, setResendIsError]   = useState(false);
 
     const formRef = useRef<HTMLFormElement>(null);
     const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -87,7 +92,7 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
         setEmailError("");
 
         const email = emailInput.trim().toLowerCase();
-        if (!email) { setEmailError("Veuillez saisir une adresse email."); return; }
+        if (!email) { setEmailError(t(lang, "register.emailRequired")); return; }
 
         setEmailLoading(true);
 
@@ -97,10 +102,10 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                 setValidatedEmail(email);
                 setStep("form");
             } else {
-                setEmailError(response.message || "Email invalide.");
+                setEmailError(response.message || t(lang, "register.emailInvalid"));
             }
         } catch (err) {
-            setEmailError(err instanceof Error ? err.message : "Email invalide.");
+            setEmailError(err instanceof Error ? err.message : t(lang, "register.emailInvalid"));
         }
 
         setEmailLoading(false);
@@ -116,7 +121,7 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
         // Validation mot de passe côté client avant envoi
         const allRulesOk = PWD_RULES.every((r) => r.test(password));
         if (!allRulesOk) {
-            setFormError("Le mot de passe ne respecte pas toutes les règles.");
+            setFormError(t(lang, "register.passwordRulesError"));
             return;
         }
 
@@ -152,7 +157,7 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
         setLoading(false);
 
         if (!result.success) {
-            setFormError(result.message || "Erreur lors de l'inscription.");
+            setFormError(result.message || t(lang, "register.registerError"));
             return;
         }
 
@@ -180,11 +185,13 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
     async function handleResend() {
         setResendLoading(true);
         setResendMsg("");
+        setResendIsError(false);
 
         try {
             const response = await apiPost("/auth/resend-confirmation", { email: sentEmail });
             if (response.success) {
-                setResendMsg("Email renvoyé.");
+                setResendMsg(t(lang, "register.emailResent"));
+                setResendIsError(false);
                 // Repart le countdown
                 setResendCooldown(RESEND_DELAY);
                 cooldownRef.current = setInterval(() => {
@@ -197,10 +204,12 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                     });
                 }, 1000);
             } else {
-                setResendMsg(response.message || "Erreur lors du renvoi.");
+                setResendMsg(response.message || t(lang, "register.resendError"));
+                setResendIsError(true);
             }
         } catch (err) {
-            setResendMsg(err instanceof Error ? err.message : "Erreur réseau.");
+            setResendMsg(err instanceof Error ? err.message : t(lang, "common.networkError"));
+            setResendIsError(true);
         }
 
         setResendLoading(false);
@@ -214,18 +223,17 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                 <main className="auth-layout">
                     <section className="auth-card" style={{ textAlign: "center" }}>
                         <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>✉️</div>
-                        <h1 style={{ color: "#16a34a" }}>Compte créé</h1>
+                        <h1 style={{ color: "#16a34a" }}>{t(lang, "register.accountCreated")}</h1>
                         <p>
-                            Un email de confirmation a été envoyé à{" "}
+                            {t(lang, "register.confirmationSent")}{" "}
                             <strong>{sentEmail}</strong>.
                         </p>
                         <p className="muted">
-                            Cliquez sur le lien dans l'email pour activer votre compte.
-                            Le lien est valable <strong>24 heures</strong>.
+                            {t(lang, "register.activateAccount")}{" "}
+                            {t(lang, "register.linkValidFor")} <strong>{t(lang, "register.twentyFourHours")}</strong>.
                         </p>
                         <p className="muted" style={{ fontSize: "0.85rem", marginTop: "0.5rem" }}>
-                            L'email contient les Conditions Générales d'Utilisation
-                            et la Charte de traitement des données médicales.
+                            {t(lang, "register.emailContainsLegalInfo")}
                         </p>
 
                         {/* Bouton renvoyer avec countdown */}
@@ -237,17 +245,17 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                                 style={{ width: "100%" }}
                             >
                                 {resendLoading
-                                    ? "Envoi en cours..."
+                                    ? t(lang, "register.resendInProgress")
                                     : resendCooldown > 0
-                                        ? `Renvoyer l'email (${resendCooldown}s)`
-                                        : "Renvoyer l'email de confirmation"}
+                                        ? `${t(lang, "register.resendEmailCountdown")} (${resendCooldown}s)`
+                                        : t(lang, "register.resendEmail")}
                             </button>
 
                             {resendMsg && (
                                 <p style={{
                                     marginTop: "0.6rem",
                                     fontSize: "0.88rem",
-                                    color: resendMsg.includes("Erreur") ? "#dc2626" : "#16a34a",
+                                    color: resendIsError ? "#dc2626" : "#16a34a",
                                 }}>
                                     {resendMsg}
                                 </p>
@@ -259,7 +267,7 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                             className="button"
                             style={{ marginTop: "1rem", display: "block" }}
                         >
-                            Retour à la connexion
+                            {t(lang, "register.backToLogin")}
                         </Link>
                     </section>
                 </main>
@@ -277,17 +285,17 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                     onLangChange={onLangChange} onFontChange={onFontChange} onUserChange={onUserChange} />
                 <main className="auth-layout">
                     <section className="auth-card">
-                        <h1>{translate(lang, "signup")}</h1>
+                        <h1>{t(lang, "auth.signup")}</h1>
                         <p className="muted">
-                            Commençons par vérifier votre adresse email.
+                            {t(lang, "register.checkEmailIntro")}
                         </p>
 
                         <form onSubmit={handleEmailCheck}>
-                            <label htmlFor="email-check">{translate(lang, "email")}</label>
+                            <label htmlFor="email-check">{t(lang, "common.email")}</label>
                             <input
                                 id="email-check"
                                 type="email"
-                                placeholder="votre@email.com"
+                                placeholder={t(lang, "register.emailPlaceholder")}
                                 value={emailInput}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) => {
                                     setEmailInput(e.target.value);
@@ -300,13 +308,13 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                             {emailError && <p className="error-inline">{emailError}</p>}
 
                             <button type="submit" disabled={emailLoading}>
-                                {emailLoading ? "Vérification..." : "Continuer"}
+                                {emailLoading ? t(lang, "register.checkingEmail") : t(lang, "common.next")}
                             </button>
                         </form>
 
                         <p className="muted" style={{ marginTop: "1.2rem" }}>
-                            {translate(lang, "alreadyAccount") || "Déjà un compte ?"}{" "}
-                            <Link to="/connexion">{translate(lang, "login")}</Link>
+                            {t(lang, "auth.alreadyAccount")}{" "}
+                            <Link to="/connexion">{t(lang, "auth.login")}</Link>
                         </p>
                     </section>
                 </main>
@@ -326,7 +334,7 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
 
             <main className="auth-layout">
                 <section className="auth-card large">
-                    <h1>{translate(lang, "signup")}</h1>
+                    <h1>{t(lang, "auth.signup")}</h1>
 
                     {/* Email validé affiché en lecture seule */}
                     <div style={{
@@ -349,7 +357,7 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                             onClick={() => { setStep("email"); setPassword(""); setFormError(""); }}
                             style={{ background: "none", border: "none", color: "#6b7a90", cursor: "pointer", fontSize: "0.8rem", padding: 0 }}
                         >
-                            Modifier
+                            {t(lang, "register.editEmail")}
                         </button>
                     </div>
 
@@ -357,23 +365,23 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                         {/* Nom / Prénom */}
                         <div className="form-grid two">
                             <div>
-                                <label htmlFor="nom">{translate(lang, "lastName")}</label>
-                                <input id="nom" name="nom" placeholder={translate(lang, "lastName")} required />
+                                <label htmlFor="nom">{t(lang, "common.lastName")}</label>
+                                <input id="nom" name="nom" placeholder={t(lang, "common.lastName")} required />
                             </div>
                             <div>
-                                <label htmlFor="prenom">{translate(lang, "firstName")}</label>
-                                <input id="prenom" name="prenom" placeholder={translate(lang, "firstName")} required />
+                                <label htmlFor="prenom">{t(lang, "common.firstName")}</label>
+                                <input id="prenom" name="prenom" placeholder={t(lang, "common.firstName")} required />
                             </div>
                         </div>
 
                         {/* Mot de passe avec show/hide et validation temps réel */}
-                        <label htmlFor="password">{translate(lang, "password")}</label>
+                        <label htmlFor="password">{t(lang, "common.password")}</label>
                         <div style={{ position: "relative" }}>
                             <input
                                 id="password"
                                 name="password"
                                 type={showPassword ? "text" : "password"}
-                                placeholder={translate(lang, "password")}
+                                placeholder={t(lang, "common.password")}
                                 value={password}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                                 style={{ paddingRight: "3rem", width: "100%", boxSizing: "border-box" }}
@@ -383,7 +391,7 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                             <button
                                 type="button"
                                 onClick={() => setShowPassword((v) => !v)}
-                                title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                                title={showPassword ? t(lang, "register.hidePassword") : t(lang, "register.showPassword")}
                                 style={{
                                     position: "absolute",
                                     right: "0.6rem",
@@ -403,13 +411,13 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                         </div>
 
                         {/* Indicateur de règles en temps réel */}
-                        <PasswordRules password={password} />
+                        <PasswordRules password={password} lang={lang} />
 
                         {/* Rôle */}
-                        <label htmlFor="role">{translate(lang, "role")}</label>
+                        <label htmlFor="role">{t(lang, "common.role")}</label>
                         <select id="role" value={role} onChange={(e) => setRole(e.target.value as UserRole)}>
-                            <option value="patient">{translate(lang, "patient")}</option>
-                            <option value="medecin">{translate(lang, "medecin")}</option>
+                            <option value="patient">{t(lang, "common.patient")}</option>
+                            <option value="medecin">{t(lang, "common.doctor")}</option>
                         </select>
 
                         {/* Champs patient */}
@@ -417,63 +425,63 @@ function RegisterPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                             <div>
                                 <div className="form-grid two">
                                     <div>
-                                        <label htmlFor="birthdate">{translate(lang, "birthdate")}</label>
+                                        <label htmlFor="birthdate">{t(lang, "common.birthdate")}</label>
                                         <input type="date" id="birthdate" name="birthdate" />
                                     </div>
                                     <div>
-                                        <label htmlFor="gender">{translate(lang, "gender")}</label>
+                                        <label htmlFor="gender">{t(lang, "common.gender")}</label>
                                         <select id="gender" name="gender">
-                                            <option value="M">{translate(lang, "gender_m")}</option>
-                                            <option value="F">{translate(lang, "gender_f")}</option>
-                                            <option value="O">{translate(lang, "gender_o")}</option>
+                                            <option value="M">{t(lang, "common.genderMale")}</option>
+                                            <option value="F">{t(lang, "common.genderFemale")}</option>
+                                            <option value="O">{t(lang, "common.genderOther")}</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div className="form-grid two">
                                     <div>
-                                        <label htmlFor="weight">{translate(lang, "weight")}</label>
-                                        <input type="number" id="weight" name="weight" min="0" placeholder={translate(lang, "weight")} />
+                                        <label htmlFor="weight">{t(lang, "common.weight")}</label>
+                                        <input type="number" id="weight" name="weight" min="0" placeholder={t(lang, "common.weight")} />
                                     </div>
                                     <div>
-                                        <label htmlFor="height">{translate(lang, "height")}</label>
-                                        <input type="number" id="height" name="height" min="0" placeholder={translate(lang, "height")} />
+                                        <label htmlFor="height">{t(lang, "common.height")}</label>
+                                        <input type="number" id="height" name="height" min="0" placeholder={t(lang, "common.height")} />
                                     </div>
                                 </div>
-                                <label htmlFor="antecedents">{translate(lang, "antecedents")}</label>
-                                <textarea id="antecedents" name="antecedents" rows={3} placeholder={translate(lang, "antecedents")} />
-                                <label htmlFor="traitements">{translate(lang, "treatments")}</label>
-                                <textarea id="traitements" name="traitements" rows={3} placeholder={translate(lang, "treatments")} />
-                                <label htmlFor="allergies">{translate(lang, "allergies")}</label>
-                                <textarea id="allergies" name="allergies" rows={3} placeholder={translate(lang, "allergies")} />
+                                <label htmlFor="antecedents">{t(lang, "common.antecedents")}</label>
+                                <textarea id="antecedents" name="antecedents" rows={3} placeholder={t(lang, "common.antecedents")} />
+                                <label htmlFor="traitements">{t(lang, "common.treatments")}</label>
+                                <textarea id="traitements" name="traitements" rows={3} placeholder={t(lang, "common.treatments")} />
+                                <label htmlFor="allergies">{t(lang, "common.allergies")}</label>
+                                <textarea id="allergies" name="allergies" rows={3} placeholder={t(lang, "common.allergies")} />
                             </div>
                         )}
 
                         {/* Champs médecin */}
                         {role === "medecin" && (
                             <div>
-                                <label htmlFor="specialite">{translate(lang, "specialite") || "Spécialité"}</label>
-                                <input id="specialite" name="specialite" placeholder={translate(lang, "specialite") || "Spécialité"} />
+                                <label htmlFor="specialite">{t(lang, "common.specialty")}</label>
+                                <input id="specialite" name="specialite" placeholder={t(lang, "common.specialty")} />
                             </div>
                         )}
 
                         {/* Consentement */}
                         <label className="checkbox-row">
                             <input type="checkbox" name="consent" required />
-                            <span>{translate(lang, "consentText")}</span>
+                            <span>{t(lang, "auth.consentText")}</span>
                         </label>
 
                         {formError && <p className="error-inline">{formError}</p>}
 
                         <button type="submit" disabled={loading || !pwdAllValid}>
                             {loading
-                                ? translate(lang, "loading") || "Création..."
-                                : translate(lang, "valider")}
+                                ? t(lang, "auth.signupLoading")
+                                : t(lang, "common.submit")}
                         </button>
                     </form>
 
                     <p className="muted" style={{ marginTop: "1rem" }}>
-                        {translate(lang, "alreadyAccount") || "Déjà un compte ?"}{" "}
-                        <Link to="/connexion">{translate(lang, "login")}</Link>
+                        {t(lang, "auth.alreadyAccount")}{" "}
+                        <Link to="/connexion">{t(lang, "auth.login")}</Link>
                     </p>
                 </section>
             </main>

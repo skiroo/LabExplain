@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
 import { logoutUser } from "../services/auth";
-import { translate } from "../data/translations";
+import { notifyAfterReload } from "../services/notifications";
+import { t } from "../i18n";
 import logoPng from "../assets/logo.png";
 
 type HeaderProps = {
@@ -66,12 +67,13 @@ function Header({
         navigate(user ? "/formulaire" : "/connexion");
     }
 
-    function handleLogout() {
-        logoutUser();
+    async function handleLogout() {
+        await logoutUser();
         closeDropdown();
-        alert(translate(lang, "logoutConfirm"));
+        notifyAfterReload(t(lang, "auth.logoutConfirm"), "success");
         onUserChange();
-        navigate("/");
+        // Rechargement complet de la page après déconnexion
+        window.location.href = "/";
     }
 
     return (
@@ -87,14 +89,14 @@ function Header({
             {/* Colonne centrale : navigation (div vide en mode simple pour tenir la grille) */}
             {!simple ? (
                 <nav>
-                    <Link to="/">{translate(lang, "home")}</Link>
+                    <Link to="/">{t(lang, "nav.home")}</Link>
                     <button type="button" className="nav-button" onClick={goToForm}>
-                        {translate(lang, "form")}
+                        {t(lang, "nav.form")}
                     </button>
                     {user && (user.role === "patient" || user.role === "medecin") && (
-                        <Link to="/dashboard">Mon espace</Link>
+                        <Link to="/dashboard">{t(lang, "nav.dashboard")}</Link>
                     )}
-                    <Link to="/about">À propos</Link>
+                    <Link to="/about">{t(lang, "nav.about")}</Link>
                 </nav>
             ) : (
                 <div aria-hidden="true" />
@@ -102,7 +104,9 @@ function Header({
 
             {/* Colonne droite : langue, police, compte */}
             <div className="right">
-                <label className="sr-only" htmlFor="lang">Langue</label>
+                <label className="sr-only" htmlFor="lang">
+                    {t(lang, "language.label")}
+                </label>
                 <select
                     id="lang"
                     aria-label="Choix de la langue"
@@ -117,17 +121,19 @@ function Header({
 
                 {showFontSelect && (
                     <>
-                        <label className="sr-only" htmlFor="fontSelect">Police</label>
+                        <label className="sr-only" htmlFor="fontSelect">
+                            {t(lang, "font.label")}
+                        </label>
                         <select
                             id="fontSelect"
-                            aria-label="Choix de la police"
+                            aria-label={t(lang, "font.chooseFont")}
                             value={font}
                             onChange={(event) => onFontChange(event.target.value as FontMode)}
                         >
-                            <option value="standard">Standard</option>
-                            <option value="malvoyant">Malvoyant</option>
-                            <option value="dyslexique">Dyslexique</option>
-                            <option value="tdah">TDAH</option>
+                            <option value="standard">{t(lang, "font.standard")}</option>
+                            <option value="malvoyant">{t(lang, "font.visuallyImpaired")}</option>
+                            <option value="dyslexique">{t(lang, "font.dyslexic")}</option>
+                            <option value="tdah">{t(lang, "font.adhd")}</option>
                         </select>
                     </>
                 )}
@@ -145,25 +151,25 @@ function Header({
                             aria-expanded={isOpen}
                             onClick={handleButtonClick}
                         >
-                            {translate(lang, "account")} &#9662;
+                            {t(lang, "nav.account")} &#9662;
                         </button>
                         <div className="dropdown-content">
                             <div className="dropdown-content-inner">
                                 <Link to="/dashboard" onClick={closeDropdown}>
-                                    {translate(lang, "myProfile")}
+                                    {t(lang, "nav.myProfile")}
                                 </Link>
                                 <hr />
-                                <Link to="/parametres" onClick={closeDropdown}>Paramètres</Link>
+                                <Link to="/parametres" onClick={closeDropdown}>{t(lang, "nav.settings")}</Link>
                                 <hr />
                                 <button type="button" className="logout-btn" onClick={handleLogout}>
-                                    {translate(lang, "logout")}
+                                    {t(lang, "nav.logout")}
                                 </button>
                             </div>
                         </div>
                     </div>
                 ) : (
                     <Link to="/connexion" id="loginLink">
-                        {translate(lang, "login")}
+                        {t(lang, "nav.login")}
                     </Link>
                 )}
             </div>

@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { searchCabinetsNear } from "../services/rendezvousApi";
+import { t } from "../i18n";
 import type { Cabinet } from "../types/chat";
+import type { Lang } from "../types/lang";
 
 // Icône par défaut de Leaflet - sans ce correctif, les marqueurs n'affichent
 // pas leur image car le bundler (Vite) ne résout pas les chemins relatifs
@@ -25,6 +27,7 @@ const defaultIcon = L.icon({
 const DEFAULT_CENTER: [number, number] = [48.8566, 2.3522];
 
 type DoctorMapPickerProps = {
+  lang: Lang;
   onSelectCabinet: (cabinet: Cabinet) => void;
 };
 
@@ -48,7 +51,7 @@ function MapEventsWatcher({ onMove }: { onMove: (lat: number, lng: number) => vo
   return null;
 }
 
-function DoctorMapPicker({ onSelectCabinet }: DoctorMapPickerProps) {
+function DoctorMapPicker({ lang, onSelectCabinet }: DoctorMapPickerProps) {
   const [cabinets, setCabinets] = useState<Cabinet[]>([]);
   const [searchValue, setSearchValue] = useState("");
   const [loading, setLoading] = useState(false);
@@ -80,7 +83,7 @@ function DoctorMapPicker({ onSelectCabinet }: DoctorMapPickerProps) {
       <div className="doctor-map-search">
         <input
           type="text"
-          placeholder="Rechercher un médecin par nom..."
+          placeholder={t(lang, "doctorMap.searchPlaceholder")}
           value={searchValue}
           onChange={(event) => setSearchValue(event.target.value)}
           onKeyDown={(event) => {
@@ -88,12 +91,12 @@ function DoctorMapPicker({ onSelectCabinet }: DoctorMapPickerProps) {
           }}
         />
         <button type="button" onClick={handleSearchSubmit} disabled={loading}>
-          Rechercher
+          {t(lang, "doctorMap.searchButton")}
         </button>
       </div>
 
       <p className="doctor-map-hint">
-        Déplacez la carte pour explorer une autre zone. {cabinets.length} cabinet(s) affiché(s).
+        {t(lang, "doctorMap.hintStart")} {cabinets.length} {t(lang, "doctorMap.displayedCabinets")}
       </p>
 
       <div className="doctor-map-container">
@@ -112,7 +115,7 @@ function DoctorMapPicker({ onSelectCabinet }: DoctorMapPickerProps) {
             >
               <Popup>
                 <strong>
-                  {cabinet.civilite || "Dr"} {cabinet.prenom} {cabinet.nom}
+                  {cabinet.civilite || t(lang, "doctorMap.defaultDoctorTitle")} {cabinet.prenom} {cabinet.nom}
                 </strong>
                 {cabinet.specialite && <p>{cabinet.specialite}</p>}
                 {cabinet.adresse && (
@@ -121,7 +124,7 @@ function DoctorMapPicker({ onSelectCabinet }: DoctorMapPickerProps) {
                   </p>
                 )}
                 <button type="button" onClick={() => onSelectCabinet(cabinet)}>
-                  Choisir ce médecin
+                  {t(lang, "doctorMap.chooseDoctor")}
                 </button>
               </Popup>
             </Marker>

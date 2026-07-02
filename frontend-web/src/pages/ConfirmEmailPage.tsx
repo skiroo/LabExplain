@@ -1,17 +1,10 @@
-/*
-Fichier : ConfirmEmailPage.tsx
-Dossier : src/pages/
-Description :
-  Page appelée depuis le lien de confirmation dans l'email d'inscription.
-  Lit le token dans l'URL (?token=...), appelle le backend, affiche le résultat.
-*/
-
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { confirmEmail } from "../services/auth";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
 import Header from "../components/Header";
+import { t } from "../i18n";
 
 type Props = {
     lang: Lang;
@@ -26,16 +19,22 @@ type Status = "loading" | "success" | "error";
 
 function ConfirmEmailPage({ lang, font, user, onLangChange, onFontChange, onUserChange }: Props) {
     const [searchParams] = useSearchParams();
-    const [status, setStatus]   = useState<Status>("loading");
+    const [status, setStatus] = useState<Status>("loading");
     const [message, setMessage] = useState("");
-    const [email, setEmail]     = useState("");
+    const [email, setEmail] = useState("");
+    const hasRun = useRef(false);
 
     useEffect(() => {
+        // Garde contre le double appel en React.StrictMode (dev)
+        // et contre un éventuel re-render qui relancerait l'effet
+        if (hasRun.current) return;
+        hasRun.current = true;
+
         const token = searchParams.get("token");
 
         if (!token) {
             setStatus("error");
-            setMessage("Lien invalide - aucun token trouvé.");
+            setMessage(t(lang, "confirmEmail.invalidNoToken"));
             return;
         }
 
@@ -43,13 +42,13 @@ function ConfirmEmailPage({ lang, font, user, onLangChange, onFontChange, onUser
             if (result.success) {
                 setStatus("success");
                 setEmail(result.email || "");
-                setMessage(result.message || "Email confirmé.");
+                setMessage(result.message || t(lang, "confirmEmail.successMessage"));
             } else {
                 setStatus("error");
-                setMessage(result.message || "Lien invalide ou expiré.");
+                setMessage(result.message || t(lang, "confirmEmail.invalidOrExpired"));
             }
         });
-    }, [searchParams]);
+    }, [searchParams, lang]);
 
     return (
         <>
@@ -69,35 +68,35 @@ function ConfirmEmailPage({ lang, font, user, onLangChange, onFontChange, onUser
 
                     {status === "loading" && (
                         <>
-                            <h1>Vérification en cours...</h1>
-                            <p className="muted">Validation de votre adresse email.</p>
+                            <h1>{t(lang, "confirmEmail.loadingTitle")}</h1>
+                            <p className="muted">{t(lang, "confirmEmail.loadingText")}</p>
                         </>
                     )}
 
                     {status === "success" && (
                         <>
-                            <h1 style={{ color: "#16a34a" }}>Email confirmé</h1>
+                            <h1 style={{ color: "#16a34a" }}>{t(lang, "confirmEmail.successTitle")}</h1>
                             <p>{message}</p>
                             {email && (
                                 <p className="muted">
-                                    Vous pouvez maintenant vous connecter avec <strong>{email}</strong>
+                                    {t(lang, "confirmEmail.successLoginText")} <strong>{email}</strong>
                                 </p>
                             )}
                             <Link to="/connexion" className="button" style={{ marginTop: "1.5rem", display: "inline-block" }}>
-                                Se connecter
+                                {t(lang, "confirmEmail.loginButton")}
                             </Link>
                         </>
                     )}
 
                     {status === "error" && (
                         <>
-                            <h1 style={{ color: "#dc2626" }}>Lien invalide</h1>
+                            <h1 style={{ color: "#dc2626" }}>{t(lang, "confirmEmail.errorTitle")}</h1>
                             <p className="error-inline">{message}</p>
                             <p className="muted">
-                                Le lien a peut-être expiré (valable 24h). Réinscrivez-vous pour recevoir un nouveau lien.
+                                {t(lang, "confirmEmail.expiredHelp")}
                             </p>
                             <Link to="/inscription" className="button secondary" style={{ marginTop: "1.5rem", display: "inline-block" }}>
-                                Retour à l'inscription
+                                {t(lang, "confirmEmail.backToSignup")}
                             </Link>
                         </>
                     )}

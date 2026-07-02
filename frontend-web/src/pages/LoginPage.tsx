@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header";
-import { translate } from "../data/translations";
+import { t } from "../i18n";
 import { loginUser } from "../services/auth";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
@@ -34,7 +34,7 @@ function LoginPage({ lang, font, user, onLangChange, onFontChange, onUserChange 
         setIsLoading(false);
 
         if (!loggedUser) {
-            setErrorMsg(message || translate(lang, "badLogin"));
+            setErrorMsg(message || t(lang, "auth.badLogin"));
             return;
         }
 
@@ -58,27 +58,27 @@ function LoginPage({ lang, font, user, onLangChange, onFontChange, onUserChange 
 
             <main className="auth-layout">
                 <section className="auth-card">
-                    <h1>{translate(lang, "login")}</h1>
-                    <p className="muted">{translate(lang, "authIntro")}</p>
+                    <h1>{t(lang, "auth.login")}</h1>
+                    <p className="muted">{t(lang, "auth.intro")}</p>
 
                     <form onSubmit={handleSubmit}>
-                        <label htmlFor="loginEmail">{translate(lang, "email")}</label>
+                        <label htmlFor="loginEmail">{t(lang, "common.email")}</label>
                         <input
                             id="loginEmail"
                             type="email"
                             autoComplete="email"
-                            placeholder="Email"
+                            placeholder={t(lang, "common.email")}
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}
                             required
                         />
 
-                        <label htmlFor="loginPassword">{translate(lang, "password")}</label>
+                        <label htmlFor="loginPassword">{t(lang, "common.password")}</label>
                         <input
                             id="loginPassword"
                             type="password"
                             autoComplete="current-password"
-                            placeholder={translate(lang, "password")}
+                            placeholder={t(lang, "common.password")}
                             value={password}
                             onChange={(event) => setPassword(event.target.value)}
                             required
@@ -87,21 +87,21 @@ function LoginPage({ lang, font, user, onLangChange, onFontChange, onUserChange 
                         {errorMsg && <p className="error-inline">{errorMsg}</p>}
 
                         <button type="submit" disabled={isLoading}>
-                            {isLoading ? translate(lang, "loading") || "Connexion..." : translate(lang, "login")}
+                            {isLoading ? t(lang, "auth.loginLoading") : t(lang, "auth.login")}
                         </button>
                     </form>
 
-                    <p className="muted">{translate(lang, "noaccount")}</p>
+                    <p className="muted">{t(lang, "auth.noAccount")}</p>
                     <Link className="button secondary full" to="/inscription">
-                        {translate(lang, "signup")}
+                        {t(lang, "auth.signup")}
                     </Link>
 
                     <div className="demo-box">
                         <p>
-                            <strong>Demo patient</strong> : patient@test.com / 1235
+                            <strong>{t(lang, "auth.demoPatient")}</strong> : patient@test.com / 1235
                         </p>
                         <p>
-                            <strong>Demo médecin</strong> : medecin@test.com / 1234
+                            <strong>{t(lang, "auth.demoDoctor")}</strong> : medecin@test.com / 1234
                         </p>
                     </div>
                 </section>

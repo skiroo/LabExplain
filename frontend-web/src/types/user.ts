@@ -23,6 +23,13 @@ export type User = {
     gender?:         "M" | "F" | "O" | string;
     specialite?:     string;
 
+    // Informations médicales patient (formulaire d'inscription)
+    weight?:         number;
+    height?:         number;
+    antecedents?:    string;
+    traitements?:    string;
+    allergies?:      string;
+
     // Indicateur - les données médicales existent en base (chiffrées)
     has_medical_data?: boolean;
 };

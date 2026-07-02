@@ -12,6 +12,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Header from "../components/Header";
 import { apiGet, apiDelete } from "../services/api";
+import { t } from "../i18n";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
 
@@ -71,22 +72,41 @@ type TabId = "profil" | "consultations" | "rendezvous";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString("fr-FR", {
+// Les dates affichées suivaient toujours le format français, quelle que soit
+// la langue choisie dans l'interface. On mappe chaque langue vers une locale
+// reconnue par l'API Intl utilisée par toLocaleDateString / toLocaleString.
+const DATE_LOCALES: Record<Lang, string> = {
+    fr: "fr-FR",
+    en: "en-GB",
+    es: "es-ES",
+    ar: "ar-EG",
+};
+
+function formatDate(dateStr: string, lang: Lang): string {
+    return new Date(dateStr).toLocaleDateString(DATE_LOCALES[lang], {
         day: "numeric",
         month: "long",
         year: "numeric",
     });
 }
 
-function formatDateTime(dateStr: string): string {
-    return new Date(dateStr).toLocaleString("fr-FR", {
+function formatDateTime(dateStr: string, lang: Lang): string {
+    return new Date(dateStr).toLocaleString(DATE_LOCALES[lang], {
         day: "numeric",
         month: "short",
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
     });
+}
+
+// Traduit le statut d'une consultation vers la langue courante
+function consultationStatusLabel(lang: Lang, statut: ApiConsultation["statut"]): string {
+    if (statut === "draft") return t(lang, "dashboard.draft");
+    if (statut === "sent") return t(lang, "dashboard.sent");
+    if (statut === "reviewed") return t(lang, "dashboard.reviewed");
+    if (statut === "archived") return t(lang, "dashboard.archived");
+    return statut;
 }
 
 // ── Composant principal ──────────────────────────────────────────────────────
@@ -132,7 +152,7 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
     }, [activeTab, user]);
     
     async function handleDeleteRdv(id: number) {
-        if (!confirm("Supprimer ce rendez-vous ?")) return;
+        if (!confirm(t(lang, "dashboard.deleteAppointmentConfirm"))) return;
         try {
             await apiDelete(`/rendezvous/${id}`);
             setRendezvousList((prev) => prev.filter((r) => r.id_rendezvous !== id));
@@ -155,13 +175,13 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
             <div className="dashboard-avatar">{user.prenom[0]}{user.nom[0]}</div>
             <div className="dashboard-identity-info">
             <p className="dashboard-identity-name">{user.prenom} {user.nom}</p>
-            <p className="dashboard-identity-role">Médecin</p>
+            <p className="dashboard-identity-role">{t(lang, "dashboard.doctorRole")}</p>
             </div>
             </div>
             <nav className="dashboard-nav">
             <button type="button" className="dashboard-nav-item active">
             <span className="nav-icon"><IconUser /></span>
-            <span>Mon profil</span>
+            <span>{t(lang, "dashboard.profile")}</span>
             </button>
             </nav>
             </aside>
@@ -169,28 +189,28 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
             <section className="dashboard-content">
             <div className="tab-panel">
             <div className="tab-header">
-            <h1>Mon profil</h1>
-            <p className="tab-subtitle">Vos informations professionnelles</p>
+            <h1>{t(lang, "dashboard.profile")}</h1>
+            <p className="tab-subtitle">{t(lang, "dashboard.professionalInfo")}</p>
             </div>
             <div className="profile-grid">
             <div className="profile-card">
-            <h2 className="card-title">Informations personnelles</h2>
+            <h2 className="card-title">{t(lang, "dashboard.personalInformation")}</h2>
             <div className="profile-fields">
             <div className="profile-field">
-            <span className="field-label">Prénom</span>
+            <span className="field-label">{t(lang, "dashboard.firstName")}</span>
             <span className="field-value">{user.prenom}</span>
             </div>
             <div className="profile-field">
-            <span className="field-label">Nom</span>
+            <span className="field-label">{t(lang, "dashboard.lastName")}</span>
             <span className="field-value">{user.nom}</span>
             </div>
             <div className="profile-field">
-            <span className="field-label">Email</span>
+            <span className="field-label">{t(lang, "dashboard.email")}</span>
             <span className="field-value">{user.email}</span>
             </div>
             {user.specialite && (
                 <div className="profile-field">
-                <span className="field-label">Spécialité</span>
+                <span className="field-label">{t(lang, "dashboard.specialty")}</span>
                 <span className="field-value">{user.specialite}</span>
                 </div>
             )}
@@ -207,9 +227,9 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
     // ── DASHBOARD PATIENT ────────────────────────────────────────────────────
     
     const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
-        { id: "profil", label: "Mon profil", icon: <IconUser /> },
-        { id: "consultations", label: "Consultations", icon: <IconClipboard /> },
-        { id: "rendezvous", label: "Rendez-vous", icon: <IconCalendar /> },
+        { id: "profil", label: t(lang, "dashboard.profile"), icon: <IconUser /> },
+        { id: "consultations", label: t(lang, "dashboard.consultations"), icon: <IconClipboard /> },
+        { id: "rendezvous", label: t(lang, "dashboard.appointments"), icon: <IconCalendar /> },
     ];
     
     const rdvAvenir = rendezvousList.filter((r) => r.statut === "a_venir");
@@ -226,7 +246,7 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
         <div className="dashboard-avatar">{user.prenom[0]}{user.nom[0]}</div>
         <div className="dashboard-identity-info">
         <p className="dashboard-identity-name">{user.prenom} {user.nom}</p>
-        <p className="dashboard-identity-role">Patient</p>
+        <p className="dashboard-identity-role">{t(lang, "dashboard.patientRole")}</p>
         </div>
         </div>
         
@@ -248,11 +268,11 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
         </nav>
         
         <div className="sidebar-action">
-        <Link to="/formulaire" className="sidebar-cta">+ Nouvelle consultation</Link>
+        <Link to="/formulaire" className="sidebar-cta">{t(lang, "dashboard.newConsultation")}</Link>
         </div>
         <div className="sidebar-action" style={{ marginTop: "8px" }}>
         <Link to="/rendez-vous" className="sidebar-cta" style={{ background: "var(--primary-dark, #1f4f82)" }}>
-        + Déclarer un rendez-vous
+        {t(lang, "dashboard.declareAppointment")}
         </Link>
         </div>
         </aside>
@@ -264,36 +284,36 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
         {activeTab === "profil" && (
             <div className="tab-panel">
             <div className="tab-header">
-            <h1>Mon profil</h1>
-            <p className="tab-subtitle">Vos informations personnelles</p>
+            <h1>{t(lang, "dashboard.profile")}</h1>
+            <p className="tab-subtitle">{t(lang, "dashboard.personalInfo")}</p>
             </div>
             <div className="profile-grid">
             <div className="profile-card">
-            <h2 className="card-title">Informations personnelles</h2>
+            <h2 className="card-title">{t(lang, "dashboard.personalInformation")}</h2>
             <div className="profile-fields">
             <div className="profile-field">
-            <span className="field-label">Prénom</span>
+            <span className="field-label">{t(lang, "dashboard.firstName")}</span>
             <span className="field-value">{user.prenom}</span>
             </div>
             <div className="profile-field">
-            <span className="field-label">Nom</span>
+            <span className="field-label">{t(lang, "dashboard.lastName")}</span>
             <span className="field-value">{user.nom}</span>
             </div>
             <div className="profile-field">
-            <span className="field-label">Email</span>
+            <span className="field-label">{t(lang, "dashboard.email")}</span>
             <span className="field-value">{user.email}</span>
             </div>
             {user.date_naissance && (
                 <div className="profile-field">
-                <span className="field-label">Date de naissance</span>
-                <span className="field-value">{formatDate(user.date_naissance)}</span>
+                <span className="field-label">{t(lang, "dashboard.birthdate")}</span>
+                <span className="field-value">{formatDate(user.date_naissance, lang)}</span>
                 </div>
             )}
             {user.gender && (
                 <div className="profile-field">
-                <span className="field-label">Genre</span>
+                <span className="field-label">{t(lang, "common.gender")}</span>
                 <span className="field-value">
-                {user.gender === "M" ? "Homme" : user.gender === "F" ? "Femme" : user.gender}
+                {user.gender === "M" ? t(lang, "common.man") : user.gender === "F" ? t(lang, "common.woman") : user.gender}
                 </span>
                 </div>
             )}
@@ -307,18 +327,18 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
         {activeTab === "consultations" && (
             <div className="tab-panel">
             <div className="tab-header">
-            <h1>Mes consultations</h1>
+            <h1>{t(lang, "dashboard.consultations")}</h1>
             <p className="tab-subtitle">
-            {loadingConsultations ? "Chargement..." : `${consultations.length} consultation(s)`}
+            {loadingConsultations ? t(lang, "common.loading") : `${consultations.length} ${t(lang, "dashboard.consultationCount")}`}
             </p>
             </div>
             
             {loadingConsultations ? (
-                <div className="empty-state"><p>Chargement des consultations...</p></div>
+                <div className="empty-state"><p>{t(lang, "dashboard.loadingConsultations")}</p></div>
             ) : consultations.length === 0 ? (
                 <div className="empty-state">
-                <p>Aucune consultation pour le moment.</p>
-                <Link to="/formulaire" className="sidebar-cta">Préparer une consultation</Link>
+                <p>{t(lang, "dashboard.noConsultation")}</p>
+                <Link to="/formulaire" className="sidebar-cta">{t(lang, "dashboard.prepareConsultation")}</Link>
                 </div>
             ) : (
                 <div className="consultations-list">
@@ -326,7 +346,7 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
                     <div key={c.id_consultation} className="consultation-card">
                     <div className="consultation-header">
                     <div className="consultation-meta">
-                    <span className="consultation-date">{formatDateTime(c.date_heure)}</span>
+                    <span className="consultation-date">{formatDateTime(c.date_heure, lang)}</span>
                     {(c.medecin_nom || c.medecin_prenom) && (
                         <span className="consultation-doctor">
                         {c.medecin_prenom} {c.medecin_nom}
@@ -338,7 +358,7 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
                     </div>
                     <div className="consultation-actions">
                     <span className={`status-badge ${c.statut === "draft" ? "status-draft" : "status-sent"}`}>
-                    {c.statut === "draft" ? "Brouillon" : c.statut === "sent" ? "Envoyé" : c.statut}
+                    {consultationStatusLabel(lang, c.statut)}
                     </span>
                     {c.symptomes && (
                         <button
@@ -346,14 +366,14 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
                         className="btn-expand"
                         onClick={() => setExpandedConsultation(expandedConsultation === c.id_consultation ? null : c.id_consultation)}
                         >
-                        {expandedConsultation === c.id_consultation ? "Masquer" : "Voir"}
+                        {expandedConsultation === c.id_consultation ? t(lang, "dashboard.hide") : t(lang, "dashboard.show")}
                         </button>
                     )}
                     </div>
                     </div>
                     {expandedConsultation === c.id_consultation && c.symptomes && (
                         <div className="consultation-resume">
-                        <h3>Symptômes</h3>
+                        <h3>{t(lang, "common.symptoms")}</h3>
                         <p>{c.symptomes}</p>
                         </div>
                     )}
@@ -370,41 +390,43 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
             <div className="tab-header">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
             <div>
-            <h1>Rendez-vous</h1>
+            <h1>{t(lang, "dashboard.appointments")}</h1>
             <p className="tab-subtitle">
-            {loadingRdv ? "Chargement..." : `${rdvAvenir.length} à venir · ${rdvPasses.length} passé(s)`}
+            {loadingRdv
+                ? t(lang, "common.loading")
+                : `${rdvAvenir.length} ${t(lang, "dashboard.upcomingCountLabel")} · ${rdvPasses.length} ${t(lang, "dashboard.pastCountLabel")}`}
             </p>
             </div>
             <Link to="/rendez-vous" className="sidebar-cta" style={{ marginTop: 0 }}>
-            + Nouveau rendez-vous
+            {t(lang, "dashboard.declareAppointment")}
             </Link>
             </div>
             </div>
             
             {loadingRdv ? (
-                <div className="empty-state"><p>Chargement des rendez-vous...</p></div>
+                <div className="empty-state"><p>{t(lang, "dashboard.loadingAppointments")}</p></div>
             ) : rendezvousList.length === 0 ? (
                 <div className="empty-state">
-                <p>Aucun rendez-vous déclaré.</p>
-                <Link to="/rendez-vous" className="sidebar-cta">Déclarer un rendez-vous</Link>
+                <p>{t(lang, "dashboard.noAppointment")}</p>
+                <Link to="/rendez-vous" className="sidebar-cta">{t(lang, "dashboard.declareAppointment")}</Link>
                 </div>
             ) : (
                 <>
                 {rdvAvenir.length > 0 && (
                     <div className="rdv-section">
-                    <h2 className="rdv-section-title">À venir</h2>
+                    <h2 className="rdv-section-title">{t(lang, "dashboard.upcoming")}</h2>
                     <div className="rdv-list">
                     {rdvAvenir.map((rdv) => (
                         <div key={rdv.id_rendezvous} className="rdv-card rdv-upcoming">
                         <div className="rdv-date-block">
                         <span className="rdv-day">
-                        {new Date(rdv.date_heure).toLocaleDateString("fr-FR", { day: "numeric" })}
+                        {new Date(rdv.date_heure).toLocaleDateString(DATE_LOCALES[lang], { day: "numeric" })}
                         </span>
                         <span className="rdv-month">
-                        {new Date(rdv.date_heure).toLocaleDateString("fr-FR", { month: "short" })}
+                        {new Date(rdv.date_heure).toLocaleDateString(DATE_LOCALES[lang], { month: "short" })}
                         </span>
                         <span className="rdv-heure">
-                        {new Date(rdv.date_heure).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(rdv.date_heure).toLocaleTimeString(DATE_LOCALES[lang], { hour: "2-digit", minute: "2-digit" })}
                         </span>
                         </div>
                         <div className="rdv-info">
@@ -417,14 +439,14 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
                         )}
                         </div>
                         <div className="rdv-cta-col">
-                        <Link to="/formulaire" className="rdv-prepare-btn">Préparer</Link>
+                        <Link to="/formulaire" className="rdv-prepare-btn">{t(lang, "dashboard.prepare")}</Link>
                         <button
                         type="button"
                         className="btn-expand"
                         style={{ display: "inline-flex", alignItems: "center", gap: "5px", color: "#dc2626" }}
                         onClick={() => handleDeleteRdv(rdv.id_rendezvous)}
                         >
-                        <IconTrash />Supprimer
+                        <IconTrash />{t(lang, "dashboard.deleteAppointment")}
                         </button>
                         </div>
                         </div>
@@ -435,19 +457,19 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
                 
                 {rdvPasses.length > 0 && (
                     <div className="rdv-section">
-                    <h2 className="rdv-section-title">Historique</h2>
+                    <h2 className="rdv-section-title">{t(lang, "dashboard.history")}</h2>
                     <div className="rdv-list">
                     {rdvPasses.map((rdv) => (
                         <div key={rdv.id_rendezvous} className="rdv-card rdv-past">
                         <div className="rdv-date-block rdv-date-past">
                         <span className="rdv-day">
-                        {new Date(rdv.date_heure).toLocaleDateString("fr-FR", { day: "numeric" })}
+                        {new Date(rdv.date_heure).toLocaleDateString(DATE_LOCALES[lang], { day: "numeric" })}
                         </span>
                         <span className="rdv-month">
-                        {new Date(rdv.date_heure).toLocaleDateString("fr-FR", { month: "short" })}
+                        {new Date(rdv.date_heure).toLocaleDateString(DATE_LOCALES[lang], { month: "short" })}
                         </span>
                         <span className="rdv-heure">
-                        {new Date(rdv.date_heure).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(rdv.date_heure).toLocaleTimeString(DATE_LOCALES[lang], { hour: "2-digit", minute: "2-digit" })}
                         </span>
                         </div>
                         <div className="rdv-info">
@@ -460,7 +482,7 @@ function DashboardPage({ lang, font, user, onLangChange, onFontChange, onUserCha
                         )}
                         </div>
                         <div className="rdv-cta-col">
-                        <span className="status-badge status-past">Passé</span>
+                        <span className="status-badge status-past">{t(lang, "dashboard.past")}</span>
                         </div>
                         </div>
                     ))}

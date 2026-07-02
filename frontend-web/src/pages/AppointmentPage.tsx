@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import DoctorMapPicker from "../components/DoctorMapPicker";
+import { t } from "../i18n";
 import { createRendezVous } from "../services/rendezvousApi";
 import type { Cabinet } from "../types/chat";
 import type { FontMode, Lang } from "../types/lang";
@@ -37,11 +38,11 @@ function AppointmentPage({ lang, font, user, onLangChange, onFontChange, onUserC
 
   async function handleSubmit() {
     if (!selectedCabinet) {
-      setErrorMsg("Veuillez sélectionner un médecin sur la carte.");
+      setErrorMsg(t(lang, "appointment.selectDoctorError"));
       return;
     }
     if (!dateHeure) {
-      setErrorMsg("Veuillez indiquer la date et l'heure du rendez-vous.");
+      setErrorMsg(t(lang, "appointment.dateTimeError"));
       return;
     }
 
@@ -61,7 +62,7 @@ function AppointmentPage({ lang, font, user, onLangChange, onFontChange, onUserC
     setSaving(false);
 
     if (!result) {
-      setErrorMsg("La création du rendez-vous a échoué. Veuillez réessayer.");
+      setErrorMsg(t(lang, "appointment.creationError"));
       return;
     }
 
@@ -74,26 +75,23 @@ function AppointmentPage({ lang, font, user, onLangChange, onFontChange, onUserC
         onLangChange={onLangChange} onFontChange={onFontChange} onUserChange={onUserChange} />
       <main className="appointment-layout">
         <section className="appointment-card">
-          <h1>Déclarer un rendez-vous</h1>
-          <p>
-            Indiquez votre prochain rendez-vous médical : choisissez le médecin sur la carte,
-            puis renseignez la date et l'heure. Cette information reste privée et n'est jamais
-            transmise au médecin sans votre action explicite.
-          </p>
+          <h1>{t(lang, "appointment.title")}</h1>
+          <p>{t(lang, "appointment.description")}</p>
 
-          <DoctorMapPicker onSelectCabinet={handleSelectCabinet} />
+          <DoctorMapPicker lang={lang} onSelectCabinet={handleSelectCabinet} />
 
           {selectedCabinet && (
             <div className="summary-box appointment-selected-doctor">
               <p>
-                Médecin sélectionné : <strong>{selectedCabinet.civilite || "Dr"} {selectedCabinet.prenom} {selectedCabinet.nom}</strong>
+                {t(lang, "appointment.selectedDoctor")}{" "}
+                <strong>{selectedCabinet.civilite || t(lang, "doctorMap.defaultDoctorTitle")} {selectedCabinet.prenom} {selectedCabinet.nom}</strong>
                 {selectedCabinet.specialite ? ` - ${selectedCabinet.specialite}` : ""}
               </p>
             </div>
           )}
 
           <div className="appointment-form">
-            <label htmlFor="date_heure">Date et heure du rendez-vous</label>
+            <label htmlFor="date_heure">{t(lang, "appointment.dateTimeLabel")}</label>
             <input
               id="date_heure"
               type="datetime-local"
@@ -101,19 +99,19 @@ function AppointmentPage({ lang, font, user, onLangChange, onFontChange, onUserC
               onChange={(event) => setDateHeure(event.target.value)}
             />
 
-            <label htmlFor="lieu">Lieu (modifiable)</label>
+            <label htmlFor="lieu">{t(lang, "appointment.locationLabel")}</label>
             <input
               id="lieu"
               type="text"
               value={lieuOverride}
               onChange={(event) => setLieuOverride(event.target.value)}
-              placeholder="Adresse du cabinet"
+              placeholder={t(lang, "appointment.locationPlaceholder")}
             />
 
             {errorMsg && <p className="error-inline">{errorMsg}</p>}
 
             <button className="button" onClick={handleSubmit} disabled={saving}>
-              {saving ? "Enregistrement..." : "Enregistrer le rendez-vous"}
+              {saving ? t(lang, "appointment.savingAppointment") : t(lang, "appointment.saveAppointment")}
             </button>
           </div>
         </section>

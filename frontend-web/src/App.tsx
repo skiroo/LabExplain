@@ -22,6 +22,9 @@ import type { FontMode, Lang } from "./types/lang";
 import type { User } from "./types/user";
 import Footer from "./components/Footer";
 import TestPdfPage from "./pages/TestPdfPage";
+import ToastContainer from "./components/ToastContainer";
+import { t } from "./i18n";
+import { languages } from "./i18n/languages";
 
 type PageProps = {
     lang: Lang;
@@ -44,12 +47,14 @@ function NotFoundPage({ lang }: PageProps) {
     return (
         <main className="auth-layout">
             <section className="auth-card" style={{ textAlign: "center" }}>
-                <h1 style={{ fontSize: "4rem", margin: 0 }}>404</h1>
+                <h1 style={{ fontSize: "4rem", margin: 0 }}>
+                    {t(lang, "app.notFoundCode")}
+                </h1>
                 <p style={{ fontSize: "1.2rem", margin: "1rem 0" }}>
-                    {lang === "en" ? "Page not found." : "Page introuvable."}
+                    {t(lang, "app.pageNotFound")}
                 </p>
                 <a href="/" className="button">
-                    {lang === "en" ? "Back to home" : "Retour à l'accueil"}
+                    {t(lang, "app.backHome")}
                 </a>
             </section>
         </main>
@@ -65,7 +70,7 @@ function App() {
 
     useEffect(() => {
         document.documentElement.lang = lang;
-        document.body.style.direction = lang === "ar" ? "rtl" : "ltr";
+        document.documentElement.dir = languages[lang].dir;
     }, [lang]);
 
     useEffect(() => {
@@ -106,6 +111,7 @@ function App() {
                 <Route path="*" element={<NotFoundPage {...pageProps} />} />
             </Routes>
             <Footer lang={lang} />
+            <ToastContainer />
         </BrowserRouter>
     );
 }

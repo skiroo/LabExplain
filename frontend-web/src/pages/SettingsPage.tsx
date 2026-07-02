@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import { apiDelete } from "../services/api";
 import { logoutUser } from "../services/auth";
+import { notify } from "../services/notifications";
+import { t } from "../i18n";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
 
@@ -48,8 +50,8 @@ function SettingsPage({ lang, font, user, onLangChange, onFontChange, onUserChan
     
     async function handlePasswordChange() {
         setPwdError(""); setPwdSuccess("");
-        if (newPwd !== confirmPwd) { setPwdError("Les mots de passe ne correspondent pas."); return; }
-        if (newPwd.length < 4) { setPwdError("Mot de passe trop court."); return; }
+        if (newPwd !== confirmPwd) { setPwdError(t(lang, "settings.passwordsDoNotMatch")); return; }
+        if (newPwd.length < 4) { setPwdError(t(lang, "settings.passwordTooShort")); return; }
         try {
             const res = await fetch("/api/users/me", {
                 method: "PUT",
@@ -57,10 +59,10 @@ function SettingsPage({ lang, font, user, onLangChange, onFontChange, onUserChan
                 body: JSON.stringify({ current_password: currentPwd, password: newPwd }),
             });
             const json = await res.json();
-            if (!res.ok) { setPwdError(json.message || "Erreur lors du changement."); return; }
-            setPwdSuccess("Mot de passe mis à jour.");
+            if (!res.ok) { setPwdError(json.message || t(lang, "settings.passwordChangeError")); return; }
+            setPwdSuccess(t(lang, "settings.passwordUpdated"));
             setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
-        } catch { setPwdError("Erreur réseau."); }
+        } catch { setPwdError(t(lang, "common.networkError")); }
     }
     
     function handleExportData() {
@@ -68,7 +70,7 @@ function SettingsPage({ lang, font, user, onLangChange, onFontChange, onUserChan
         const blob = new Blob([JSON.stringify(user, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url; a.download = "mes-donnees-labexplain.json"; a.click();
+        a.href = url; a.download = t(lang, "settings.exportFilename"); a.click();
         URL.revokeObjectURL(url);
     }
     
@@ -83,7 +85,7 @@ function SettingsPage({ lang, font, user, onLangChange, onFontChange, onUserChan
             navigate("/");
         } catch {
             setDeleteConfirm(false);
-            alert("Erreur lors de la suppression du compte. Veuillez réessayer.");
+            notify(t(lang, "settings.deleteAccountError"), "error");
         }
     }
     
@@ -94,47 +96,47 @@ function SettingsPage({ lang, font, user, onLangChange, onFontChange, onUserChan
         <Header lang={lang} font={font} user={user}
         onLangChange={onLangChange} onFontChange={onFontChange} onUserChange={onUserChange} />
         <main className="settings-layout">
-        <h1>Paramètres</h1>
+        <h1>{t(lang, "settings.title")}</h1>
         
         {/* --- SECTION AFFICHAGE --- */}
         <section className="settings-section">
-        <h2>Affichage</h2>
-        <label>Langue de l'interface
+        <h2>{t(lang, "settings.display")}</h2>
+        <label>{t(lang, "language.interfaceLanguage")}
         <select value={lang} onChange={e => onLangChange(e.target.value as Lang)}>
-        <option value="fr">Français</option>
-        <option value="en">English</option>
-        <option value="es">Español</option>
-        <option value="ar">العربية</option>
+        <option value="fr">{t(lang, "language.fr")}</option>
+        <option value="en">{t(lang, "language.en")}</option>
+        <option value="es">{t(lang, "language.es")}</option>
+        <option value="ar">{t(lang, "language.ar")}</option>
         </select>
         </label>
-        <label>Mode de lecture
+        <label>{t(lang, "font.readingMode")}
         <select value={font} onChange={e => onFontChange(e.target.value as FontMode)}>
-        <option value="standard">Standard</option>
-        <option value="malvoyant">Malvoyant</option>
-        <option value="dyslexique">Dyslexique</option>
-        <option value="tdah">TDAH</option>
+        <option value="standard">{t(lang, "font.standard")}</option>
+        <option value="malvoyant">{t(lang, "font.visuallyImpaired")}</option>
+        <option value="dyslexique">{t(lang, "font.dyslexic")}</option>
+        <option value="tdah">{t(lang, "font.adhd")}</option>
         </select>
         </label>
         </section>
         
         {/* --- SECTION IA --- */}
         <section className="settings-section">
-        <h2>IA et résumés</h2>
-        <label>Langue du résumé généré
+        <h2>{t(lang, "settings.aiAndSummaries")}</h2>
+        <label>{t(lang, "language.summaryLanguage")}
         <select value={aiLang} onChange={e => setAiLang(e.target.value)}>
-        <option value="fr">Français</option>
-        <option value="en">English</option>
-        <option value="es">Español</option>
-        <option value="ar">العربية</option>
+        <option value="fr">{t(lang, "language.fr")}</option>
+        <option value="en">{t(lang, "language.en")}</option>
+        <option value="es">{t(lang, "language.es")}</option>
+        <option value="ar">{t(lang, "language.ar")}</option>
         </select>
         </label>
-        <label>Niveau de détail
+        <label>{t(lang, "settings.detailLevel")}
         <select value={aiDetail} onChange={e => setAiDetail(e.target.value)}>
-        <option value="court">Court</option>
-        <option value="détaillé">Détaillé</option>
+        <option value="court">{t(lang, "settings.short")}</option>
+        <option value="détaillé">{t(lang, "settings.detailed")}</option>
         </select>
         </label>
-        <label>Nombre de questions suggérées : {aiQCount}
+        <label>{t(lang, "settings.suggestedQuestionsCount")} {aiQCount}
         <input type="range" min={3} max={7} step={2} value={aiQCount}
         onChange={e => setAiQCount(Number(e.target.value))} />
         </label>
@@ -142,52 +144,52 @@ function SettingsPage({ lang, font, user, onLangChange, onFontChange, onUserChan
         
         {/* --- SECTION QUESTIONNAIRE --- */}
         <section className="settings-section">
-        <h2>Questionnaire</h2>
+        <h2>{t(lang, "settings.questionnaire")}</h2>
         <label className="toggle-label">
         <input type="checkbox" checked={showRedflags}
         onChange={e => setShowRedflags(e.target.checked)} />
-        Afficher les signaux d'alarme (redflags)
+        {t(lang, "settings.showRedFlags")}
         </label>
         <label className="toggle-label">
         <input type="checkbox" checked={simpleMode}
         onChange={e => setSimpleMode(e.target.checked)} />
-        Activer le mode guidé simplifié
+        {t(lang, "settings.simpleGuidedMode")}
         </label>
         </section>
         
         {/* --- SECTION COMPTE --- */}
         <section className="settings-section">
-        <h2>Compte</h2>
+        <h2>{t(lang, "settings.account")}</h2>
         
         <div className="settings-subsection">
-        <h3>Modifier le mot de passe</h3>
-        <input type="password" placeholder="Mot de passe actuel" value={currentPwd}
+        <h3>{t(lang, "settings.changePassword")}</h3>
+        <input type="password" placeholder={t(lang, "settings.currentPassword")} value={currentPwd}
         onChange={e => setCurrentPwd(e.target.value)} />
-        <input type="password" placeholder="Nouveau mot de passe" value={newPwd}
+        <input type="password" placeholder={t(lang, "settings.newPassword")} value={newPwd}
         onChange={e => setNewPwd(e.target.value)} />
-        <input type="password" placeholder="Confirmer le nouveau" value={confirmPwd}
+        <input type="password" placeholder={t(lang, "settings.confirmNewPassword")} value={confirmPwd}
         onChange={e => setConfirmPwd(e.target.value)} />
         {pwdError && <p className="error-inline">{pwdError}</p>}
         {pwdSuccess && <p className="success-inline">{pwdSuccess}</p>}
         <button className="button" onClick={handlePasswordChange}>
-        Changer le mot de passe
+        {t(lang, "settings.updatePassword")}
         </button>
         </div>
         
         <div className="settings-subsection">
-        <h3>Mes données (RGPD)</h3>
+        <h3>{t(lang, "settings.myDataRgpd")}</h3>
         <button className="button secondary" onClick={handleExportData}>
-        Télécharger mes données
+        {t(lang, "settings.downloadMyData")}
         </button>
         </div>
         
         <div className="settings-subsection">
-        <h3>Supprimer mon compte</h3>
+        <h3>{t(lang, "settings.deleteAccount")}</h3>
         {deleteConfirm && (
-            <p className="error-inline">⚠️ Êtes-vous sûr ? Cette action est irréversible.</p>
+            <p className="error-inline">⚠️ {t(lang, "settings.deleteConfirmText")}</p>
         )}
         <button className="button danger" onClick={handleDeleteAccount}>
-        {deleteConfirm ? "Confirmer la suppression" : "Supprimer mon compte"}
+        {deleteConfirm ? t(lang, "settings.confirmDeletion") : t(lang, "settings.deleteAccount")}
         </button>
         </div>
         </section>

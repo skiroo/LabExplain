@@ -1,6 +1,7 @@
 // src/pages/AboutPage.tsx
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import { t } from "../i18n";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
 
@@ -11,13 +12,18 @@ type Props = {
   onUserChange: () => void;
 };
 
-const team = [
-  { name: "Inès MEHADHEBI", role: "Chef de projet" },
-  { name: "Maël LE BRIS", role: "Data Scientist" },
-  { name: "Maxime CERRUTI", role: "Lead IA / Data Expert" },
-  { name: "Kiroshan SIVAKUMAR", role: "Développeur Backend" },
-  { name: "Camille TURA DURAND", role: "Développeuse Frontend" },
-  { name: "Bastien FRANJA", role: "UX/UI Designer / Tests" },
+type TeamMember = {
+  name: string;
+  roleKey: string;
+};
+
+const team: TeamMember[] = [
+  { name: "Inès MEHADHEBI", roleKey: "about.roles.projectManager" },
+  { name: "Maël LE BRIS", roleKey: "about.roles.dataScientist" },
+  { name: "Maxime CERRUTI", roleKey: "about.roles.aiLead" },
+  { name: "Kiroshan SIVAKUMAR", roleKey: "about.roles.backendDeveloper" },
+  { name: "Camille TURA DURAND", roleKey: "about.roles.frontendDeveloper" },
+  { name: "Bastien FRANJA", roleKey: "about.roles.uxUiTester" },
 ];
 
 function AboutPage({ lang, font, user, onLangChange, onFontChange, onUserChange }: Props) {
@@ -29,30 +35,30 @@ function AboutPage({ lang, font, user, onLangChange, onFontChange, onUserChange 
       <main className="about-layout">
         <section className="about-card">
           <h1>LabExplain</h1>
-          <p className="slogan">Préparez vos questions. Optimisez votre consultation.</p>
-          <p>LabExplain est un assistant intelligent basé sur l'IA qui aide les patients à préparer leur consultation médicale...</p>
-          <p className="muted">Projet académique ING2 - EFREI Paris Panthéon-Assas Université, 2025-2026. Mentor : Julien SAID</p>
+          <p className="slogan">{t(lang, "about.slogan")}</p>
+          <p>{t(lang, "about.description")}</p>
+          <p className="muted">{t(lang, "about.academicProject")}</p>
         </section>
 
         <section className="about-card">
-          <h2>L'équipe</h2>
+          <h2>{t(lang, "about.teamTitle")}</h2>
           <ul className="team-list">
             {team.map(m => (
-              <li key={m.name}><strong>{m.name}</strong> - {m.role}</li>
+              <li key={m.name}><strong>{m.name}</strong> - {t(lang, m.roleKey)}</li>
             ))}
           </ul>
         </section>
 
         <section className="about-card">
-          <h2>Nos valeurs</h2>
+          <h2>{t(lang, "about.valuesTitle")}</h2>
           <ul>
-            <li><strong>Inclusivité</strong> : interface pensée pour les profils fragiles</li>
-            <li><strong>Green IT</strong> : interface légère, appels serveurs optimisés</li>
-            <li><strong>RGPD</strong> : données protégées, consentement obligatoire, suppression à la demande</li>
+            <li><strong>{t(lang, "about.inclusivityTitle")}</strong> : {t(lang, "about.inclusivityText")}</li>
+            <li><strong>{t(lang, "about.greenItTitle")}</strong> : {t(lang, "about.greenItText")}</li>
+            <li><strong>{t(lang, "about.rgpdTitle")}</strong> : {t(lang, "about.rgpdText")}</li>
           </ul>
         </section>
 
-        <button className="button" onClick={() => navigate(-1)}>← Retour</button>
+        <button className="button" onClick={() => navigate(-1)}>← {t(lang, "about.back")}</button>
       </main>
     </>
   );

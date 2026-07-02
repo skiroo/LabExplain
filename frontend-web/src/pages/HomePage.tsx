@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
-import { translate } from "../data/translations";
+import { t } from "../i18n";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
 
@@ -34,29 +34,28 @@ function HomePage({ lang, font, user, onLangChange, onFontChange, onUserChange }
       <main className="home-premium">
         <section className="hero-premium">
           <div className="hero-left">
-            <span className="hero-badge">{translate(lang, "tagline")}</span>
-            <h1>{translate(lang, "welcome")}</h1>
-            <p className="hero-text">{translate(lang, "desc")}</p>
+            <span className="hero-badge">{t(lang, "home.heroBadge")}</span>
+            <h1>{t(lang, "home.heroTitle")}</h1>
+            <p className="hero-text">{t(lang, "home.heroDesc")}</p>
             <p className="hero-subtext">
-              LabExplain aide le patient à structurer ses symptômes, ses traitements et ses antécédents
-              avant le rendez-vous, sans jamais remplacer un professionnel de santé.
+              {t(lang, "home.heroSubtext")}
             </p>
 
             <div className="hero-cta">
               <button className="button primary big-btn" type="button" onClick={start}>
-                {translate(lang, "startNow")}
+                {t(lang, "home.startNow")}
               </button>
               {!user && (
                 <Link className="button secondary big-btn" to="/connexion">
-                  {translate(lang, "login")}
+                  {t(lang, "auth.login")}
                 </Link>
               )}
             </div>
 
             <div className="hero-trust-row">
-              <div className="trust-pill">Données locales</div>
-              <div className="trust-pill">Multilingue</div>
-              <div className="trust-pill">Accessibilité cognitive</div>
+              <div className="trust-pill">{t(lang, "home.trustLocalData")}</div>
+              <div className="trust-pill">{t(lang, "home.trustMultilingual")}</div>
+              <div className="trust-pill">{t(lang, "home.trustCognitiveAccessibility")}</div>
             </div>
           </div>
 
@@ -68,91 +67,89 @@ function HomePage({ lang, font, user, onLangChange, onFontChange, onUserChange }
                 <span></span>
               </div>
               <div className="mock-content">
-                <div className="mock-bot">{translate(lang, "bot_hello")}</div>
-                <div className="mock-user">Dr Martin</div>
-                <div className="mock-bot">{translate(lang, "question_urgency")}</div>
+                <div className="mock-bot">{t(lang, "home.demoBotHello")}</div>
+                <div className="mock-user">{t(lang, "home.doctorExample")}</div>
+                <div className="mock-bot">{t(lang, "home.demoQuestionUrgency")}</div>
                 <div className="mock-options">
-                  <span>{translate(lang, "urgent_bad")}</span>
-                  <span>{translate(lang, "urgent_medium")}</span>
-                  <span>{translate(lang, "urgent_routine")}</span>
+                  <span>{t(lang, "home.demoUrgentBad")}</span>
+                  <span>{t(lang, "home.demoUrgentMedium")}</span>
+                  <span>{t(lang, "home.demoUrgentRoutine")}</span>
                 </div>
               </div>
             </div>
 
             <div className="floating-card floating-top">
-              <strong>+ clair</strong>
-              <p>Un résumé structuré avant la consultation</p>
+              <strong>{t(lang, "home.clearerTitle")}</strong>
+              <p>{t(lang, "home.clearerText")}</p>
             </div>
             <div className="floating-card floating-bottom">
-              <strong>+ accessible</strong>
-              <p>Langues et polices adaptées à chaque profil</p>
+              <strong>{t(lang, "home.accessibleTitle")}</strong>
+              <p>{t(lang, "home.accessibleText")}</p>
             </div>
           </div>
         </section>
 
         <section className="medical-warning">
           <div className="warning-card">
-            <strong>{translate(lang, "medicalFrameTitle")}</strong>
-            <p>{translate(lang, "medicalFrameText")}</p>
+            <strong>{t(lang, "medical.frameTitle")}</strong>
+            <p>{t(lang, "medical.frameText")}</p>
           </div>
         </section>
 
         <section className="stats-strip">
           <div className="stat-box">
             <h3>4</h3>
-            <p>langues disponibles</p>
+            <p>{t(lang, "home.availableLanguagesCount")}</p>
           </div>
           <div className="stat-box">
             <h3>3</h3>
-            <p>modes de lecture adaptés</p>
+            <p>{t(lang, "home.readingModesCount")}</p>
           </div>
           <div className="stat-box">
             <h3>1</h3>
-            <p>objectif : mieux communiquer</p>
+            <p>{t(lang, "home.communicationGoal")}</p>
           </div>
         </section>
 
         <section className="section-block">
           <div className="section-head">
-            <span className="section-kicker">Pourquoi LabExplain ?</span>
-            <h2>Une expérience pensée pour les patients qui ont du mal à exprimer l’essentiel</h2>
+            <span className="section-kicker">{t(lang, "home.whyTitle")}</span>
+            <h2>{t(lang, "home.whySubtitle")}</h2>
             <p>
-              Le stress, la langue, la douleur, l’âge ou certains troubles cognitifs peuvent rendre
-              une consultation plus difficile. LabExplain prépare l’échange avant le rendez-vous.
+              {t(lang, "home.whyText")}
             </p>
           </div>
 
           <div className="feature-grid premium-grid">
             <article className="feature-card gradient-card">
-              <h3>{translate(lang, "contextTitle")}</h3>
-              <p>{translate(lang, "contextText")}</p>
+              <h3>{t(lang, "home.contextTitle")}</h3>
+              <p>{t(lang, "home.contextText")}</p>
             </article>
             <article className="feature-card gradient-card">
-              <h3>{translate(lang, "solutionTitle")}</h3>
-              <p>{translate(lang, "solutionText")}</p>
+              <h3>{t(lang, "home.solutionTitle")}</h3>
+              <p>{t(lang, "home.solutionText")}</p>
             </article>
             <article className="feature-card gradient-card">
-              <h3>{translate(lang, "positionTitle")}</h3>
-              <p>{translate(lang, "positionText")}</p>
+              <h3>{t(lang, "home.positionTitle")}</h3>
+              <p>{t(lang, "home.positionText")}</p>
             </article>
           </div>
         </section>
 
         <section className="section-block final-cta">
           <div className="final-cta-card">
-            <span className="section-kicker">Prêt à commencer ?</span>
-            <h2>Préparez votre consultation autrement</h2>
+            <span className="section-kicker">{t(lang, "home.finalCtaKicker")}</span>
+            <h2>{t(lang, "home.finalCtaTitle")}</h2>
             <p>
-              Une interface simple, moderne et inclusive pour aider le patient à mieux communiquer
-              avec le professionnel de santé.
+              {t(lang, "home.finalCtaText")}
             </p>
             <div className="hero-cta">
               <button className="button primary big-btn" type="button" onClick={start}>
-                {translate(lang, "startNow")}
+                {t(lang, "home.startNow")}
               </button>
               {!user && (
                 <Link className="button secondary big-btn" to="/connexion">
-                  {translate(lang, "login")}
+                  {t(lang, "auth.login")}
                 </Link>
               )}
             </div>

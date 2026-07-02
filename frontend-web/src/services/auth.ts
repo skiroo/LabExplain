@@ -9,8 +9,9 @@ Description :
   - confirmEmail : valide le token depuis l'URL de confirmation
 */
 
-import { removeCurrentUser, setCurrentUser } from "./storage";
+import { removeCurrentUser, setCurrentUser, getStoredLang } from "./storage";
 import { apiPost, apiGet } from "./api";
+import { t } from "../i18n";
 import type { User } from "../types/user";
 
 type LoginResponse = {
@@ -45,7 +46,7 @@ export async function loginUser(
 
         return { user: response.data.user };
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Email ou mot de passe incorrect.";
+        const message = error instanceof Error ? error.message : t(getStoredLang(), "authService.badLogin");
         return { user: null, message };
     }
 }
@@ -59,13 +60,13 @@ export async function registerUser(
         if (!response.success) {
             return {
                 success: false,
-                message: response.message || "Erreur lors de l'inscription.",
+                message: response.message || t(getStoredLang(), "authService.registerError"),
             };
         }
 
         return { success: true };
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Erreur lors de l'inscription.";
+        const message = error instanceof Error ? error.message : t(getStoredLang(), "authService.registerError");
         return { success: false, message };
     }
 }
@@ -99,7 +100,7 @@ export async function confirmEmail(
             message: response.message,
         };
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Erreur de confirmation.";
+        const message = error instanceof Error ? error.message : t(getStoredLang(), "authService.confirmEmailError");
         return { success: false, message };
     }
 }

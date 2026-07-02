@@ -8,20 +8,22 @@ import { useState } from "react";
 const API_URL = "http://127.0.0.1:5000/api";
 
 // Données patient fictives représentant la simulation qu'on a faite
+// (cas utilisé pour la vidéo de démo : douleurs abdominales)
 const FAKE_PATIENT_DATA = {
     symptoms:
-        "Maux de tête pulsatiles bilatéraux (tempes) depuis 2 semaines, surtout le matin au réveil. " +
-        "Fatigue permanente malgré un sommeil correct. Nausées légères lors des pics douloureux. " +
-        "Sensibilité à la lumière vive.",
+        "Douleurs abdominales crampiformes, par vagues, en haut à droite du ventre, sous les côtes. " +
+        "Apparaissent surtout environ une heure après les repas et s'atténuent en position allongée. " +
+        "Intensité estimée entre 6 et 7 sur 10 lors des pics. " +
+        "Nausées à plusieurs reprises après les repas, sans vomissements. " +
+        "Fatigue plus marquée que d'habitude depuis quelques jours.",
     medicalHistory:
-        "Hypertension légère suivie depuis 2 ans. " +
-        "Maux de tête occasionnels dans le passé, jamais aussi fréquents ni intenses. " +
-        "Aucun antécédent de migraine diagnostiquée.",
+        "Gastrite diagnostiquée il y a environ deux ans, aucun épisode depuis. " +
+        "Aucune maladie chronique connue.",
     currentTreatments:
-        "Ramipril 5mg une fois par jour le matin. " +
-        "Paracétamol 1g en automédication — soulagement partiel.",
-    painLevel: null,
-    additionalNotes: "Allergie à la pénicilline (réaction cutanée documentée).",
+        "Aucun traitement de fond. " +
+        "Paracétamol en automédication ponctuelle, non régulière.",
+    painLevel: 7,
+    additionalNotes: "Aucune allergie connue, ni médicamenteuse ni alimentaire.",
     language: "fr",
 };
 
@@ -121,10 +123,11 @@ function TestPdfPage() {
             <div style={{ background: "#f8fafc", border: "1px solid #dde6f2", borderRadius: 12, padding: "1.2rem", marginBottom: "1.5rem" }}>
                 <strong>Données patient envoyées à l'IA :</strong>
                 <ul style={{ margin: "0.8rem 0 0", paddingLeft: "1.2rem", lineHeight: 1.9, color: "#333", fontSize: "0.92rem" }}>
-                    <li><strong>Symptômes :</strong> Maux de tête pulsatiles bilatéraux depuis 2 semaines, fatigue, nausées, photosensibilité</li>
-                    <li><strong>Antécédents :</strong> Hypertension légère (2 ans), migraines occasionnelles</li>
-                    <li><strong>Traitements :</strong> Ramipril 5mg, paracétamol 1g (automédication)</li>
-                    <li><strong>Allergie :</strong> Pénicilline</li>
+                    <li><strong>Symptômes :</strong> Douleurs abdominales crampiformes en haut à droite, postprandiales, nausées, fatigue</li>
+                    <li><strong>Antécédents :</strong> Gastrite il y a 2 ans, aucune maladie chronique</li>
+                    <li><strong>Traitements :</strong> Aucun traitement de fond, paracétamol occasionnel</li>
+                    <li><strong>Intensité de la douleur :</strong> 7/10</li>
+                    <li><strong>Allergie :</strong> Aucune connue</li>
                     <li><strong>Médecin :</strong> Dr Salim Abdoul-Carime</li>
                 </ul>
             </div>

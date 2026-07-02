@@ -7,6 +7,8 @@ Description :
 */
 
 import { apiGet } from "./api";
+import { getStoredLang } from "./storage";
+import { t } from "../i18n";
 import type { User } from "../types/user";
 
 export async function getDoctors(): Promise<User[]> {
@@ -19,7 +21,7 @@ export async function getDoctors(): Promise<User[]> {
 
     return response.data;
   } catch (error) {
-    console.error("Erreur récupération médecins :", error);
+    console.error(t(getStoredLang(), "doctorService.fetchDoctorsError"), error);
     return [];
   }
 }

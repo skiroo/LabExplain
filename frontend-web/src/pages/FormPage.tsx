@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ChatBot from "../components/Chatbot";
 import Header from "../components/Header";
-import { translate } from "../data/translations";
+import { t } from "../i18n";
 import type { SummaryResult } from "../types/chat";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
@@ -42,21 +42,21 @@ function FormPage({ lang, font, user, onLangChange, onFontChange, onUserChange }
         <section className="form-hero">
           <div className="form-hero-left">
             <span className="section-kicker">LabExplain</span>
-            <h1>{translate(lang, "form")}</h1>
+            <h1>{t(lang, "formPage.title")}</h1>
             <p className="form-hero-text">
-              Préparez votre consultation dans un espace clair, rassurant et adapté à vos besoins.
+              {t(lang, "formPage.heroText")}
             </p>
             <div className="form-hero-badges">
-              <span className="trust-pill">Guidé pas à pas</span>
-              <span className="trust-pill">Multilingue</span>
-              <span className="trust-pill">Sans diagnostic</span>
+              <span className="trust-pill">{t(lang, "common.guidedStepByStep")}</span>
+              <span className="trust-pill">{t(lang, "common.multilingual")}</span>
+              <span className="trust-pill">{t(lang, "common.noDiagnosis")}</span>
             </div>
           </div>
 
           <div className="form-hero-right">
             <div className="mini-medical-card">
-              <strong>{translate(lang, "medicalFrameTitle")}</strong>
-              <p>{translate(lang, "medicalFrameText")}</p>
+              <strong>{t(lang, "medical.frameTitle")}</strong>
+              <p>{t(lang, "medical.frameText")}</p>
             </div>
           </div>
         </section>
@@ -64,18 +64,16 @@ function FormPage({ lang, font, user, onLangChange, onFontChange, onUserChange }
         <section className="form-layout-premium">
           <aside className="form-sidebar">
             <div className="sidebar-card soft-card">
-              <h3>Pourquoi ce formulaire ?</h3>
+              <h3>{t(lang, "formPage.whyFormTitle")}</h3>
               <p>
-                Il aide à structurer vos informations avant le rendez-vous pour réduire le stress
-                et éviter les oublis.
+                {t(lang, "formPage.whyFormText")}
               </p>
             </div>
 
             <div className="sidebar-card soft-card">
-              <h3>Conseil</h3>
+              <h3>{t(lang, "formPage.adviceTitle")}</h3>
               <p>
-                Prenez quelques minutes pour répondre calmement. Plus les informations sont claires,
-                plus la consultation sera fluide.
+                {t(lang, "formPage.adviceText")}
               </p>
             </div>
           </aside>
@@ -83,19 +81,19 @@ function FormPage({ lang, font, user, onLangChange, onFontChange, onUserChange }
           <section className="form-main-panel">
             <div className="panel-topbar">
               <div>
-                <span className="section-kicker">Espace patient</span>
-                <h2>Préparation de consultation</h2>
+                <span className="section-kicker">{t(lang, "formPage.patientSpace")}</span>
+                <h2>{t(lang, "formPage.consultationPreparation")}</h2>
               </div>
               <div className="panel-status">
-                <span className="status-pill">Sécurisé</span>
-                <span className="status-pill">Accessible</span>
+                <span className="status-pill">{t(lang, "common.secure")}</span>
+                <span className="status-pill">{t(lang, "common.accessible")}</span>
               </div>
             </div>
 
             <div className="form-content-box">
               {user.role === "medecin" ? (
                 <div className="card">
-                  Les comptes-rendus reçus de vos patients sont disponibles dans votre tableau de bord.
+                  {t(lang, "formPage.doctorViewText")}
                 </div>
               ) : (
                 <ChatBot

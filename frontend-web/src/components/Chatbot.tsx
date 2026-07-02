@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiPost } from "../services/api";
 import { getUpcomingRendezVous } from "../services/rendezvousApi";
-import { translate } from "../data/translations";
+import { t } from "../i18n";
 import type {
   InterviewHistoryItem,
   InterviewResponse,
@@ -77,10 +77,11 @@ function ChatBot({ lang, onCompleted }: ChatBotProps) {
       const response = await apiPost<InterviewResponse>("/ai/interview", {
         history: nextHistory,
         doctorName,
+        language: lang,
       });
 
       if (!response.success || !response.data) {
-        setErrorMsg(response.message || "Erreur lors de la génération de la question.");
+        setErrorMsg(response.message || t(lang, "chatbot.questionGenerationError"));
         setLoading(false);
         return;
       }
@@ -96,7 +97,7 @@ function ChatBot({ lang, onCompleted }: ChatBotProps) {
         setFinished(true);
         setMessages((prev) => [
           ...prev,
-          { role: "bot", text: "Merci, j'ai toutes les informations nécessaires. Je prépare votre synthèse..." },
+          { role: "bot", text: t(lang, "chatbot.enoughInfo") },
         ]);
         await requestSummary(turn);
         return;
@@ -105,7 +106,7 @@ function ChatBot({ lang, onCompleted }: ChatBotProps) {
       setMessages((prev) => [...prev, { role: "bot", text: turn.question }]);
       setCurrentOptions(turn.options || []);
     } catch {
-      setErrorMsg("Impossible de contacter l'assistant. Vérifiez votre connexion et réessayez.");
+      setErrorMsg(t(lang, "chatbot.assistantConnectionError"));
     } finally {
       setLoading(false);
     }
@@ -127,7 +128,7 @@ function ChatBot({ lang, onCompleted }: ChatBotProps) {
       });
 
       if (!response.success || !response.data) {
-        setErrorMsg(response.message || "Erreur lors de la génération du résumé.");
+        setErrorMsg(response.message || t(lang, "chatbot.summaryGenerationError"));
         setLoading(false);
         return;
       }
@@ -144,7 +145,7 @@ function ChatBot({ lang, onCompleted }: ChatBotProps) {
         selectedRendezvous?.id_rendezvous ?? null
       );
     } catch {
-      setErrorMsg("Impossible de générer le résumé. Vérifiez votre connexion et réessayez.");
+      setErrorMsg(t(lang, "chatbot.summaryConnectionError"));
     } finally {
       setLoading(false);
     }
@@ -199,15 +200,15 @@ function ChatBot({ lang, onCompleted }: ChatBotProps) {
     return (
       <div className="chat-shell">
         <div className="summary-box">
-          <p>Quel rendez-vous souhaitez-vous préparer ?</p>
+          <p>{t(lang, "chatbot.chooseAppointment")}</p>
 
           {!rendezvousLoaded ? (
-            <p>Chargement de vos rendez-vous...</p>
+            <p>{t(lang, "chatbot.loadingAppointments")}</p>
           ) : rendezvousList.length === 0 ? (
             <>
-              <p>Vous n'avez aucun rendez-vous à venir déclaré.</p>
+              <p>{t(lang, "chatbot.noUpcomingAppointment")}</p>
               <Link to="/rendez-vous" className="button secondary">
-                Déclarer un rendez-vous
+                {t(lang, "chatbot.declareAppointment")}
               </Link>
             </>
           ) : (
@@ -215,7 +216,7 @@ function ChatBot({ lang, onCompleted }: ChatBotProps) {
               value={selectedRendezvousId}
               onChange={(event) => setSelectedRendezvousId(event.target.value)}
             >
-              <option value="">- Sélectionner -</option>
+              <option value="">{t(lang, "chatbot.selectPlaceholder")}</option>
               {rendezvousList.map((rdv) => (
                 <option key={rdv.id_rendezvous} value={String(rdv.id_rendezvous)}>
                   {formatRendezvousDate(rdv.date_heure)} - {rdv.medecin_prenom} {rdv.medecin_nom}
@@ -226,7 +227,7 @@ function ChatBot({ lang, onCompleted }: ChatBotProps) {
           )}
 
           <button type="button" onClick={startInterview} disabled={!selectedRendezvous}>
-            {translate(lang, "next")}
+            {t(lang, "common.next")}
           </button>
         </div>
       </div>
@@ -253,9 +254,9 @@ function ChatBot({ lang, onCompleted }: ChatBotProps) {
 
         {finished ? (
           <div className="summary-box">
-            <p>Synthèse en cours de préparation.</p>
+            <p>{t(lang, "chatbot.summaryPreparing")}</p>
             <button type="button" onClick={restart}>
-              {translate(lang, "newForm")}
+              {t(lang, "chatbot.newForm")}
             </button>
           </div>
         ) : currentOptions.length > 0 ? (
@@ -270,7 +271,7 @@ function ChatBot({ lang, onCompleted }: ChatBotProps) {
           <div>
             <input
               type="text"
-              placeholder="Votre réponse..."
+              placeholder={t(lang, "chatbot.inputPlaceholder")}
               value={textValue}
               disabled={loading}
               onChange={(event) => setTextValue(event.target.value)}
@@ -279,7 +280,7 @@ function ChatBot({ lang, onCompleted }: ChatBotProps) {
               }}
             />
             <button type="button" disabled={loading} onClick={() => answer(textValue)}>
-              {translate(lang, "next")}
+              {t(lang, "common.next")}
             </button>
           </div>
         )}

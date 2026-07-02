@@ -6,6 +6,9 @@ Description :
   Envoie automatiquement le token et X-User-Id (= id_compte) dans chaque requête.
 */
 
+import { getStoredLang } from "./storage";
+import { t } from "../i18n";
+
 const API_URL = "http://127.0.0.1:5000/api";
 
 export type ApiResponse<T> = {
@@ -46,7 +49,9 @@ async function request<T>(
     const result = await response.json();
 
     if (!response.ok) {
-        throw new Error(result.message || "Erreur lors de la requête API");
+        // Ce service n'a pas accès à la langue courante via les props React,
+        // on la relit donc directement depuis le localStorage.
+        throw new Error(result.message || t(getStoredLang(), "api.requestError"));
     }
 
     return result;

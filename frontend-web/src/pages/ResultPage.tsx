@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import { t } from "../i18n";
 import type { FontMode, Lang } from "../types/lang";
 import type { User } from "../types/user";
 
@@ -53,18 +54,18 @@ function ResultPage({ lang, font, user, onLangChange, onFontChange, onUserChange
       });
 
       if (!response.ok) {
-        throw new Error("Le serveur n'a pas pu générer le PDF.");
+        throw new Error(t(lang, "result.serverPdfError"));
       }
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "synthese-labexplain.pdf";
+      link.download = t(lang, "result.pdfFilename");
       link.click();
       URL.revokeObjectURL(url);
     } catch {
-      setDownloadError("Le téléchargement du PDF a échoué. Veuillez réessayer.");
+      setDownloadError(t(lang, "result.downloadPdfError"));
     } finally {
       setDownloading(false);
     }
@@ -81,11 +82,11 @@ function ResultPage({ lang, font, user, onLangChange, onFontChange, onUserChange
         </div>
 
         <section className="result-card">
-          <h1>Résumé de votre consultation</h1>
+          <h1>{t(lang, "result.title")}</h1>
 
           {data.redFlags && data.redFlags.length > 0 && (
             <div className="result-redflags">
-              <h2>Signaux d'attention relevés</h2>
+              <h2>{t(lang, "result.attentionSignals")}</h2>
               <ul>
                 {data.redFlags.map((flag, i) => <li key={i}>{flag}</li>)}
               </ul>
@@ -93,12 +94,12 @@ function ResultPage({ lang, font, user, onLangChange, onFontChange, onUserChange
           )}
 
           <div className="result-summary">
-            <h2>Résumé médical</h2>
+            <h2>{t(lang, "result.medicalSummary")}</h2>
             <p>{data.summary}</p>
           </div>
 
           <div className="result-questions">
-            <h2>Questions à poser à votre médecin</h2>
+            <h2>{t(lang, "result.questionsForDoctor")}</h2>
             <ol>
               {data.questions.map((q, i) => <li key={i}>{q}</li>)}
             </ol>
@@ -108,13 +109,13 @@ function ResultPage({ lang, font, user, onLangChange, onFontChange, onUserChange
 
           <div className="result-actions">
             <button className="button secondary" disabled>
-              Partager avec mon médecin
+              {t(lang, "result.shareWithDoctor")}
             </button>
             <button className="button secondary" onClick={handleDownloadPdf} disabled={downloading}>
-              {downloading ? "Génération..." : "Télécharger en PDF"}
+              {downloading ? t(lang, "result.pdfGenerating") : t(lang, "result.downloadPdf")}
             </button>
             <button className="button" onClick={() => navigate("/dashboard")}>
-              Retour au dashboard
+              {t(lang, "result.backToDashboard")}
             </button>
           </div>
         </section>

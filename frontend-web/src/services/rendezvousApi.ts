@@ -7,6 +7,8 @@ Description :
 */
 
 import { apiGet, apiPost, apiDelete } from "./api";
+import { getStoredLang } from "./storage";
+import { t } from "../i18n";
 import type { Cabinet, RendezVous } from "../types/chat";
 
 export async function searchCabinetsNear(
@@ -23,7 +25,7 @@ export async function searchCabinetsNear(
     if (!response.success || !response.data) return [];
     return response.data;
   } catch (error) {
-    console.error("Erreur recherche cabinets :", error);
+    console.error(t(getStoredLang(), "rendezvousService.searchCabinetsError"), error);
     return [];
   }
 }
@@ -34,7 +36,7 @@ export async function getUpcomingRendezVous(): Promise<RendezVous[]> {
     if (!response.success || !response.data) return [];
     return response.data;
   } catch (error) {
-    console.error("Erreur récupération des rendez-vous à venir :", error);
+    console.error(t(getStoredLang(), "rendezvousService.fetchUpcomingError"), error);
     return [];
   }
 }
@@ -45,7 +47,7 @@ export async function getAllRendezVous(): Promise<RendezVous[]> {
     if (!response.success || !response.data) return [];
     return response.data;
   } catch (error) {
-    console.error("Erreur récupération des rendez-vous :", error);
+    console.error(t(getStoredLang(), "rendezvousService.fetchAllError"), error);
     return [];
   }
 }
@@ -68,7 +70,7 @@ export async function createRendezVous(
     if (!response.success || !response.data) return null;
     return response.data;
   } catch (error) {
-    console.error("Erreur création du rendez-vous :", error);
+    console.error(t(getStoredLang(), "rendezvousService.createError"), error);
     return null;
   }
 }
@@ -78,7 +80,7 @@ export async function deleteRendezVous(id: number): Promise<boolean> {
     const response = await apiDelete(`/rendezvous/${id}`);
     return response.success;
   } catch (error) {
-    console.error("Erreur suppression du rendez-vous :", error);
+    console.error(t(getStoredLang(), "rendezvousService.deleteError"), error);
     return false;
   }
 }
